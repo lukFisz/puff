@@ -1,15 +1,16 @@
 # <img src="/img/logo.png" alt="drawing" width="70" style="transform: translate(0, 15px)"/> Puff - Deluge Torrent Retention Manager
 
-Application for automatic torrent management in Deluge. Removes finished torrents that have exceeded a specified retention period.
+Application for automatic torrent management in Deluge. Removes finished torrents that have exceeded a specified
+retention period.
 
 ![img.png](img/running_app.png)
 
 ## Description
 
-Puff is a background application that connects to a Deluge client via JSON-RPC 
-and automatically removes finished torrents according to a configurable retention policy. 
-The application runs as a cron job scheduler and can be deployed as a Docker container 
-with small footprint. 
+Puff is a background application that connects to a Deluge client via JSON-RPC
+and automatically removes finished torrents according to a configurable retention policy.
+The application runs as a cron job scheduler and can be deployed as a Docker container
+with small footprint.
 
 ## Features
 
@@ -30,21 +31,22 @@ with small footprint.
 
 The application is configured via environment variables:
 
-| Variable | Description | Required | Default Value |
-|----------|-------------|----------|---------------|
-| `PUFF_CRON_SCHEDULE` | Cron schedule (e.g., `0 0 * * *` for daily at midnight) | Yes | - |
-| `PUFF_DELUGE_URL` | URL to Deluge JSON-RPC API (e.g., `http://deluge.lan/json`) | Yes | - |
-| `PUFF_DELUGE_PASSWORD` | Deluge password | Yes | - |
-| `PUFF_DELUGE_CLIENT_TIMEOUT` | HTTP client timeout. Valid time units: ns, us (or µs), ms, s, m, h. | No | `2m0s` |
-| `PUFF_RETENTION` | Retention period in ISO 8601 format (e.g., `P14D` = 14 days) | No | `P14D` |
-| `PUFF_START_DELAY` | Application startup delay | No | `0s` |
-| `PUFF_DRY_RUN` | Test mode (does not delete torrents) | No | `false` |
-| `PUFF_LOG_LEVEL` | Logging level (DEBUG, INFO, WARN, ERROR) | No | `INFO` |
-| `TZ` | Time zone | No | `UTC` |
+| Variable                     | Description                                                         | Required | Default Value |
+|------------------------------|---------------------------------------------------------------------|----------|---------------|
+| `PUFF_CRON_SCHEDULE`         | Cron schedule (e.g., `0 0 * * *` for daily at midnight)             | Yes      | -             |
+| `PUFF_DELUGE_URL`            | URL to Deluge JSON-RPC API (e.g., `http://deluge.lan/json`)         | Yes      | -             |
+| `PUFF_DELUGE_PASSWORD`       | Deluge password                                                     | Yes      | -             |
+| `PUFF_DELUGE_CLIENT_TIMEOUT` | HTTP client timeout. Valid time units: ns, us (or µs), ms, s, m, h. | No       | `2m0s`        |
+| `PUFF_RETENTION`             | Retention period in ISO 8601 format (e.g., `P14D` = 14 days)        | No       | `P14D`        |
+| `PUFF_START_DELAY`           | Application startup delay                                           | No       | `0s`          |
+| `PUFF_DRY_RUN`               | Test mode (does not delete torrents)                                | No       | `false`       |
+| `PUFF_LOG_LEVEL`             | Logging level (DEBUG, INFO, WARN, ERROR)                            | No       | `INFO`        |
+| `TZ`                         | Time zone                                                           | No       | `UTC`         |
 
 ### Retention Format
 
 Retention is specified in ISO 8601 period format:
+
 - `P14D` - 14 days
 - `P30D` - 30 days
 - `P1M` - 1 month
@@ -53,6 +55,7 @@ Retention is specified in ISO 8601 period format:
 ### Cron Schedule Format
 
 Uses standard cron format with 5 or 6 fields:
+
 - `0 0 * * *` - daily at midnight
 - `0 */6 * * *` - every 6 hours
 - `0 0 * * 0` - weekly on Sunday
@@ -122,7 +125,7 @@ services:
     restart: unless-stopped
     # Optional: Health check
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "puff"]
+      test: [ "CMD", "pgrep", "-f", "puff" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -134,10 +137,10 @@ services:
 1. The application connects to Deluge via JSON-RPC API
 2. Starts a job scheduler according to `PUFF_CRON_SCHEDULE`
 3. In each cycle:
-   - Retrieves a list of finished torrents
-   - Filters torrents that have exceeded the retention period (based on `time_since_download`)
-   - Removes expired torrents along with their data (if `PUFF_DRY_RUN=false`)
-   - Logs operation details, including freed disk space
+    - Retrieves a list of finished torrents
+    - Filters torrents that have exceeded the retention period (based on `time_since_download`)
+    - Removes expired torrents along with their data (if `PUFF_DRY_RUN=false`)
+    - Logs operation details, including freed disk space
 
 ## Dry-Run Mode
 
@@ -148,14 +151,15 @@ In dry-run mode, the application only logs which torrents would be removed but d
 ### Project Structure
 
 ```
-gotestcron/
-├── main.go           # Main application file
-├── config.go         # Configuration and environment variables
-├── cronjob.go        # Job scheduler
-├── deluge.go         # Deluge JSON-RPC client
-├── retentionjob.go   # Torrent removal logic
-├── Dockerfile        # Docker image
-└── run.sh            # Local execution script
+root/
+├── Dockerfile           # Docker image
+├── run.sh               # Local execution script
+├── main/
+│   ├── main.go          # Main application file
+│   ├── config.go        # Configuration and environment variables
+│   ├── cronjob.go       # Job scheduler
+│   ├── deluge.go        # Deluge JSON-RPC client
+│   ├── retentionjob.go  # Torrent removal logic
 ```
 
 ## Author
