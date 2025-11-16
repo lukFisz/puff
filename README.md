@@ -2,6 +2,8 @@
 
 Application for automatic torrent management in Deluge. Removes finished torrents that have exceeded a specified retention period.
 
+![img.png](img.png)
+
 ## Description
 
 Puff is a background application that connects to a Deluge client via JSON-RPC and automatically removes finished torrents according to a configurable retention policy. The application runs as a cron job scheduler and can be deployed as a Docker container.
