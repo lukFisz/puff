@@ -1,4 +1,4 @@
-module gotestcron
+module puff
 
 go 1.25
 

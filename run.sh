@@ -2,7 +2,7 @@
 
 mkdir -p target
 
-go build -o target/puff
+go build -o target/puff ./main
 
 export PUFF_CRON_SCHEDULE="0/10 * * * * *"
 export PUFF_DELUGE_URL="http://deluge.lan/json"
