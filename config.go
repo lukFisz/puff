@@ -9,14 +9,15 @@ import (
 )
 
 type AppConfig struct {
-	Cron           string `envconfig:"PUFF_CRON_SCHEDULE" required:"true"`
-	DelugeUrl      string `envconfig:"PUFF_DELUGE_URL" required:"true"`
-	DelugePassword string `envconfig:"PUFF_DELUGE_PASSWORD" required:"true"`
-	Retention      string `envconfig:"PUFF_RETENTION" default:"P14D"`
-	StartDelay     string `envconfig:"PUFF_START_DELAY" default:"0s"`
-	DryRun         bool   `envconfig:"PUFF_DRY_RUN" default:"false"`
-	LogLevel       string `envconfig:"PUFF_LOG_LEVEL" default:"INFO"`
-	TimeZone       string `envconfig:"TZ" default:"Europe/Warsaw"`
+	Cron                string `envconfig:"PUFF_CRON_SCHEDULE" required:"true"`
+	DelugeUrl           string `envconfig:"PUFF_DELUGE_URL" required:"true"`
+	DelugePassword      string `envconfig:"PUFF_DELUGE_PASSWORD" required:"true"`
+	DelugeClientTimeout string `envconfig:"PUFF_DELUGE_CLIENT_TIMEOUT" default:"2m0s"`
+	Retention           string `envconfig:"PUFF_RETENTION" default:"P14D"`
+	StartDelay          string `envconfig:"PUFF_START_DELAY" default:"0s"`
+	DryRun              bool   `envconfig:"PUFF_DRY_RUN" default:"false"`
+	LogLevel            string `envconfig:"PUFF_LOG_LEVEL" default:"INFO"`
+	TimeZone            string `envconfig:"TZ" default:"Europe/Warsaw"`
 }
 
 func GetConfig() AppConfig {
@@ -47,6 +48,14 @@ func (config AppConfig) RetentionInSeconds() int {
 }
 
 func (config AppConfig) StartDelayDuration() time.Duration {
+	duration, err := time.ParseDuration(config.StartDelay)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return duration
+}
+
+func (config AppConfig) DelugeClientTimeoutDuration() time.Duration {
 	duration, err := time.ParseDuration(config.StartDelay)
 	if err != nil {
 		log.Fatal(err.Error())
