@@ -17,7 +17,7 @@ type AppConfig struct {
 	StartDelay          string `envconfig:"PUFF_START_DELAY" default:"0s"`
 	DryRun              bool   `envconfig:"PUFF_DRY_RUN" default:"false"`
 	LogLevel            string `envconfig:"PUFF_LOG_LEVEL" default:"INFO"`
-	TimeZone            string `envconfig:"TZ" default:"Europe/Warsaw"`
+	TimeZone            string `envconfig:"TZ" default:"UTC"`
 }
 
 func GetConfig() AppConfig {
