@@ -6,17 +6,17 @@ COPY go.mod .
 COPY *.go .
 
 RUN go mod tidy
-RUN go build -o cronapka
+RUN go build -o puff
 
-FROM alpine:latest
+FROM alpine:3.22
 LABEL authors="lukaszfiszer"
 
 RUN apk add --no-cache tzdata
 
-WORKDIR /opt/cronapka
+WORKDIR /app
 
-COPY --from=builder /app/cronapka .
+COPY --from=builder /app/puff .
 
 ENV GOMEMLIMIT=8MiB
 
-ENTRYPOINT ["./cronapka"]
+ENTRYPOINT ["./puff"]
