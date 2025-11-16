@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ghcr.io
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+          SHORT_VERSION=$(echo $TAG | cut -d '.' -f 1,2)
+          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build and tag image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }} \
+                       -t ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ steps.get_version.outputs.SHORT_VERSION }} .
+
+      - name: Push images to GHCR
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ steps.get_version.outputs.SHORT_VERSION }}
