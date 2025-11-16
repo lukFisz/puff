@@ -32,9 +32,11 @@ jobs:
       - name: Build and tag image
         run: |
           docker build -t ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }} \
-                       -t ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }} .
+                       -t ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }} \
+                       -t ghcr.io/lukfisz/puff:latest  .
 
       - name: Push images to GHCR
         run: |
           docker push ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
           docker push ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
+          docker push ghcr.io/lukfisz/puff:latest
