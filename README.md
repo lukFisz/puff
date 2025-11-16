@@ -73,7 +73,7 @@ docker run -d \
   -e PUFF_DELUGE_PASSWORD="your_password" \
   -e PUFF_RETENTION="P14D" \
   --name puff \
-  puff
+  ghcr.io/lukfisz/puff:latest
 ```
 
 ### Docker Compose Example
@@ -83,7 +83,7 @@ Basic example:
 ```yaml
 services:
   puff:
-    image: puff:latest
+    image: ghcr.io/lukfisz/puff:latest
     container_name: puff
     environment:
       PUFF_CRON_SCHEDULE: "0 0 * * *"
@@ -98,7 +98,7 @@ Complete example with additional options:
 ```yaml
 services:
   puff:
-    image: puff:latest
+    image: ghcr.io/lukfisz/puff:latest
     container_name: puff
     environment:
       # Required: Cron schedule for retention job
