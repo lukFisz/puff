@@ -1,4 +1,4 @@
-# Puff - Deluge Torrent Retention Manager
+# <img src="logo.png" alt="drawing" width="50" style="transform: translate(0, 15px)"/> Puff - Deluge Torrent Retention Manager
 
 Application for automatic torrent management in Deluge. Removes finished torrents that have exceeded a specified retention period.
 
