@@ -71,7 +71,7 @@ func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContex
 }
 
 func runApp(config AppConfig) appContext {
-	delugeClient := NewDelugeClient(config.DelugeUrl, config.DelugePassword)
+	delugeClient := NewDelugeClient(config.DelugeUrl, config.DelugePassword, config.DelugeClientTimeoutDuration())
 	if err := delugeClient.Login(); err != nil {
 		log.Error("deluge client", "err", err)
 	} else {
@@ -91,5 +91,5 @@ func gracefulShutdown(executionContext appContext) {
 	err := executionContext.Scheduler.Shutdown()
 	if err != nil {
 	}
-	log.Info("shut down")
+	log.Print("shut down")
 }

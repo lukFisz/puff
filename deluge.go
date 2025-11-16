@@ -68,11 +68,11 @@ func FormattedBytes(bytes int64) string {
 	}
 }
 
-func NewDelugeClient(baseURL, password string) *DelugeClient {
+func NewDelugeClient(baseURL string, password string, timeout time.Duration) *DelugeClient {
 	return &DelugeClient{
 		BaseURL:  baseURL,
 		Password: password,
-		Client:   &http.Client{Timeout: 60 * time.Second},
+		Client:   &http.Client{Timeout: timeout},
 		idCount:  0,
 	}
 }
