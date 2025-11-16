@@ -4,4 +4,11 @@ mkdir -p target
 
 go build -o target/cronapka
 
-BRUSH_CRON_SCHEDULE="0/10 * * * * *" ./target/cronapka
+export PUFF_CRON_SCHEDULE="0/10 * * * * *"
+export PUFF_DELUGE_URL="http://deluge.lan/json"
+export PUFF_DELUGE_PASSWORD="deluge"
+export PUFF_START_DELAY="5s"
+export PUFF_DRY_RUN="true"
+export PUFF_LOG_LEVEL="debug"
+
+./target/cronapka

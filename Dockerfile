@@ -17,6 +17,6 @@ WORKDIR /opt/cronapka
 
 COPY --from=builder /app/cronapka .
 
-ENV GOMEMLIMIT=7MiB
+ENV GOMEMLIMIT=8MiB
 
 ENTRYPOINT ["./cronapka"]

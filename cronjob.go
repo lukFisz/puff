@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func newScheduler(config config) gocron.Scheduler {
+func NewScheduler(config AppConfig) gocron.Scheduler {
 	scheduler, err := gocron.NewScheduler(
-		gocron.WithLocation(config.location()),
+		gocron.WithLocation(config.Location()),
 	)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -19,12 +19,13 @@ func newScheduler(config config) gocron.Scheduler {
 	return scheduler
 }
 
-func addCronjob(scheduler gocron.Scheduler, jobName string, config config, job func()) {
+func AddCronjob(scheduler gocron.Scheduler, jobName string, config AppConfig, job func()) {
 	cronjob, err := scheduler.NewJob(
 		gocron.CronJob(config.Cron, true),
 		gocron.NewTask(job),
 		gocron.WithEventListeners(beforeJob(), afterJob(scheduler)),
 		gocron.WithName(jobName),
+		gocron.WithSingletonMode(gocron.LimitModeReschedule),
 	)
 	if err != nil {
 		log.Fatal(err.Error())

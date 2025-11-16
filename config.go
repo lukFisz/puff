@@ -5,26 +5,51 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/rickb777/date/period"
 )
 
-type config struct {
-	Cron     string `envconfig:"BRUSH_CRON_SCHEDULE" required:"true"`
-	TimeZone string `envconfig:"TZ" default:"Europe/Warsaw"`
+type AppConfig struct {
+	Cron           string `envconfig:"PUFF_CRON_SCHEDULE" required:"true"`
+	DelugeUrl      string `envconfig:"PUFF_DELUGE_URL" required:"true"`
+	DelugePassword string `envconfig:"PUFF_DELUGE_PASSWORD" required:"true"`
+	Retention      string `envconfig:"PUFF_RETENTION" default:"P14D"`
+	StartDelay     string `envconfig:"PUFF_START_DELAY" default:"0s"`
+	DryRun         bool   `envconfig:"PUFF_DRY_RUN" default:"false"`
+	LogLevel       string `envconfig:"PUFF_LOG_LEVEL" default:"INFO"`
+	TimeZone       string `envconfig:"TZ" default:"Europe/Warsaw"`
 }
 
-func getConfig() config {
-	var config config
+func GetConfig() AppConfig {
+	var config AppConfig
 	err := envconfig.Process("", &config)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	config.RetentionInSeconds()
 	return config
 }
 
-func (config config) location() *time.Location {
+func (config AppConfig) Location() *time.Location {
 	location, err := time.LoadLocation(config.TimeZone)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	return location
+}
+
+func (config AppConfig) RetentionInSeconds() int {
+	period, err := period.Parse(config.Retention)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	dur := period.DurationApprox()
+	return int(dur.Seconds())
+}
+
+func (config AppConfig) StartDelayDuration() time.Duration {
+	duration, err := time.ParseDuration(config.StartDelay)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return duration
 }
