@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/go-co-op/gocron/v2"
@@ -23,15 +25,41 @@ type appContext struct {
 
 func main() {
 	fmt.Print(appBanner)
+	log.Print("started")
 
-	config := getConfig()
+	config := GetConfig()
 
-	log.Info("init", "app config", config)
+	setLogLevel(config)
+	logConfig(config)
+	delayAppStart(config)
 
 	orchestrateExecution(
 		func() appContext { return runApp(config) },
 		gracefulShutdown,
 	)
+}
+
+func setLogLevel(config AppConfig) {
+	level, err := log.ParseLevel(config.LogLevel)
+	if err != nil {
+		log.Fatal("log level", "err", err)
+	}
+	log.SetLevel(level)
+}
+
+func delayAppStart(config AppConfig) {
+	startDelayDuration := config.StartDelayDuration()
+	if startDelayDuration.Seconds() > 0 {
+		log.Info("start delay", "duration", startDelayDuration)
+		time.Sleep(startDelayDuration)
+	}
+}
+
+func logConfig(config AppConfig) {
+	maskedConfig := config
+	maskedConfig.DelugePassword = "***"
+	prettyConfig, _ := json.MarshalIndent(maskedConfig, "", "  ")
+	log.Info("init", "app config", string(prettyConfig))
 }
 
 func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContext)) {
@@ -42,13 +70,19 @@ func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContex
 	cleanUp(executionContext)
 }
 
-func runApp(config config) appContext {
-	scheduler := newScheduler(config)
-	addCronjob(
+func runApp(config AppConfig) appContext {
+	delugeClient := NewDelugeClient(config.DelugeUrl, config.DelugePassword)
+	if err := delugeClient.Login(); err != nil {
+		log.Error("deluge client", "err", err)
+	} else {
+		log.Info("deluge client", "authentication", "successful")
+	}
+	scheduler := NewScheduler(config)
+	AddCronjob(
 		scheduler,
-		"torrent retention",
+		"Deluge torrent retention",
 		config,
-		func() { log.Print("doing stuff...") },
+		func() { removeExpiredTorrents(*delugeClient, config) },
 	)
 	return appContext{Scheduler: scheduler}
 }
