@@ -64,7 +64,7 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         with:
-          upload_url: https://github.com/lukFisz/puff/releases/tag/${{ steps.get_version.outputs.VERSION }}
+          upload_url: https://api.github.com/repos/lukFisz/puff/releases/assets/puff-${{ steps.get_version.outputs.VERSION }}
           asset_path: ./puff
           asset_name: puff
           asset_content_type: application/octet-stream
