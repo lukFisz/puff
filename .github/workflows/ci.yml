@@ -40,33 +40,3 @@ jobs:
           docker push ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
           docker push ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
           docker push ghcr.io/lukfisz/puff:latest
-
-  build-bin:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.25'
-
-      - name: Build Go binary
-        run: go build -o puff ./main
-
-      - name: Extract version from tag
-        id: get_version
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: https://uploads.github.com/repos/lukFisz/puff/releases/${{ steps.get_version.outputs.VERSION }}/assets/puff
-          asset_path: ./puff
-          asset_name: puff
-          asset_content_type: application/octet-stream
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
