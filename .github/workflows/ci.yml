@@ -31,10 +31,10 @@ jobs:
 
       - name: Build and tag image
         run: |
-          docker build -t ghcr.io/lukfisz/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }} \
-                       -t ghcr.io/lukfisz/${{ github.repository }}:${{ steps.get_version.outputs.SHORT_VERSION }} .
+          docker build -t ghcr.io/lukfisz/${{ github.repository_id }}:${{ steps.get_version.outputs.VERSION }} \
+                       -t ghcr.io/lukfisz/${{ github.repository_id }}:${{ steps.get_version.outputs.SHORT_VERSION }} .
 
       - name: Push images to GHCR
         run: |
-          docker push ghcr.io/lukfisz/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
-          docker push ghcr.io/lukfisz/${{ github.repository }}:${{ steps.get_version.outputs.SHORT_VERSION }}
+          docker push ghcr.io/lukfisz/${{ github.repository_id }}:${{ steps.get_version.outputs.VERSION }}
+          docker push ghcr.io/lukfisz/${{ github.repository_id }}:${{ steps.get_version.outputs.SHORT_VERSION }}
