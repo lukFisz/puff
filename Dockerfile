@@ -17,6 +17,4 @@ WORKDIR /app
 
 COPY --from=builder /app/puff .
 
-ENV GOMEMLIMIT=8MiB
-
 ENTRYPOINT ["./puff"]
