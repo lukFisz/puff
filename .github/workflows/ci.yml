@@ -7,6 +7,9 @@ on:
 jobs:
   build-image-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target-arch: [ 'arm64', 'amd64' ]
     permissions:
       contents: read
       packages: write
@@ -27,6 +30,14 @@ jobs:
           SHORT_VERSION=$(echo $TAG | cut -d '.' -f 1,2)
           echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Setup Go v1.25
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25
+
+      - name: Build for linux/${{ matrix.target-arch }}
+        run: GOOS=linux GOARCH=${{ matrix.target-arch }} go build -o puff_${{ matrix.target-arch }} main/*
+
       - name: Log in to Registry
         uses: docker/login-action@v3
         with:
@@ -38,8 +49,10 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.target-arch }}
           push: true
+          build-args: |
+            TARGET_ARCH=${{ matrix.target-arch }}
           tags: |
             ghcr.io/lukfisz/puff:latest
             ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
