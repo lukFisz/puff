@@ -22,9 +22,12 @@ jobs:
           go-version: 1.25
 
       - name: Build arch amd64, arm64
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
         run: |
-          GOOS=linux GOARCH=arm64 go build -o puff_arm64 main/*
-          GOOS=linux GOARCH=amd64 go build -o puff_amd64 main/*
+          GOARCH=arm64 go build -o puff_arm64 main/*
+          GOARCH=amd64 go build -o puff_amd64 main/*
 
       # publish
       - name: Set up QEMU
