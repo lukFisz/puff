@@ -68,7 +68,7 @@ jobs:
             ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
 
   publish:
-    if: !contains(steps.get_version.outputs.VERSION, '-RC')
+    if: ${{ !contains(steps.get_version.outputs.VERSION, '-RC') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
