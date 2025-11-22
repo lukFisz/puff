@@ -20,6 +20,7 @@ with small footprint.
 - 🔐 Authentication via Deluge JSON-RPC API
 - 📊 Detailed operation logging
 - 🐳 Ready-to-use Docker image
+- 💬 Discord notifications for job summaries and errors
 
 ## Requirements
 
@@ -41,6 +42,7 @@ The application is configured via environment variables:
 | `PUFF_START_DELAY`           | Application startup delay                                           | No       | `0s`          |
 | `PUFF_DRY_RUN`               | Test mode (does not delete torrents)                                | No       | `false`       |
 | `PUFF_LOG_LEVEL`             | Logging level (DEBUG, INFO, WARN, ERROR)                            | No       | `INFO`        |
+| `PUFF_DISCORD_WEBHOOK_URL` | Discord webhook URL for notifications                               | No       | -             |
 | `TZ`                         | Time zone                                                           | No       | `UTC`         |
 
 ### Retention Format
@@ -141,6 +143,17 @@ services:
     - Filters torrents that have exceeded the retention period (based on `time_since_download`)
     - Removes expired torrents along with their data (if `PUFF_DRY_RUN=false`)
     - Logs operation details, including freed disk space
+    - Sends a notification to Discord (if configured)
+
+## Discord Notifications
+
+Puff can send notifications to a Discord channel using a webhook. This is useful for monitoring the application's status and receiving timely alerts.
+
+Notifications are sent for:
+- **Job Summaries**: A summary of the retention job, including the number of removed torrents and the total space freed.
+- **Errors**: Any errors or fatal events that occur during the application's execution.
+
+To enable Discord notifications, you need to provide a webhook URL in the `PUFF_DISCORD_WEBHOOK_URL` environment variable. You can get a webhook URL from your Discord server's settings.
 
 ## Dry-Run Mode
 
@@ -159,6 +172,7 @@ root/
 │   ├── config.go        # Configuration and environment variables
 │   ├── cronjob.go       # Job scheduler
 │   ├── deluge.go        # Deluge JSON-RPC client
+│   ├── discord.go       # Discord client
 │   ├── retentionjob.go  # Torrent removal logic
 ```
 
