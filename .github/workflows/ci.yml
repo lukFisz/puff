@@ -53,7 +53,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
+            ghcr.io/lukfisz/puff:RCRC
+
       - name: Build and push (linux/amd64,linux/arm64)
         if: !contains(steps.get_version.outputs.VERSION, '-RC')
         uses: docker/build-push-action@v4
