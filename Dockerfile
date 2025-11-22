@@ -7,6 +7,6 @@ WORKDIR /app
 
 ARG TARGETARCH
 
-COPY puff_${TARGETARCH} puff_${TARGETARCH}
+COPY puff_${TARGETARCH} puff
 
-ENTRYPOINT ["./puff_${TARGETARCH}"]
+ENTRYPOINT ["./puff"]
