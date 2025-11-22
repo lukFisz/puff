@@ -5,8 +5,6 @@ RUN apk add --no-cache tzdata
 
 WORKDIR /app
 
-ARG TARGET_ARCH="amd64"
-
-COPY puff_${TARGET_ARCH} puff
+COPY puff_${TARGETARCH} puff
 
 ENTRYPOINT ["./puff"]
