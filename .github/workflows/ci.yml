@@ -5,15 +5,33 @@ on:
     types: [ published ]
 
 jobs:
-  build-image-and-push:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         target-arch: [ 'arm64', 'amd64' ]
+
+    steps:
+      - name: Setup Go v1.25
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25
+
+      - name: Build for linux/${{ matrix.target-arch }}
+        run: GOOS=linux GOARCH=${{ matrix.target-arch }} go build -o puff_${{ matrix.target-arch }} main/*
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-output
+          path: puff_*
+
+  publish-rc:
+    if: contains(steps.get_version.outputs.VERSION, '-RC')
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -21,6 +39,54 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-output
+
+      - name: Build and push (linux/amd64,linux/arm64)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
+
+  publish:
+    if: !contains(steps.get_version.outputs.VERSION, '-RC')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version from tag
         id: get_version
@@ -30,39 +96,18 @@ jobs:
           SHORT_VERSION=$(echo $TAG | cut -d '.' -f 1,2)
           echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Setup Go v1.25
-        uses: actions/setup-go@v5
+      - name: Download artifact
+        uses: actions/download-artifact@v3
         with:
-          go-version: 1.25
+          name: build-output
 
-      - name: Build for linux/${{ matrix.target-arch }}
-        run: GOOS=linux GOARCH=${{ matrix.target-arch }} go build -o puff_${{ matrix.target-arch }} main/*
-
-      - name: Log in to Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push (linux/amd64,linux/arm64) - Release candidate
-        if: contains(steps.get_version.outputs.VERSION, '-RC')
+      - name: Build and push (linux/amd64,linux/arm64)
         uses: docker/build-push-action@v4
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/lukfisz/puff:RCRC
-
-#      - name: Build and push (linux/amd64,linux/arm64)
-#        if: !contains(steps.get_version.outputs.VERSION, '-RC')
-#        uses: docker/build-push-action@v4
-#        with:
-#          context: .
-#          platforms: linux/amd64,linux/arm64
-#          push: true
-#          tags: |
-#            ghcr.io/lukfisz/puff:latest
-#            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
-#            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
+            ghcr.io/lukfisz/puff:latest
+            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
+            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
