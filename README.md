@@ -120,7 +120,7 @@ services:
       - PUFF_DRY_RUN=false
       # Optional: Logging level (default: INFO)
       - PUFF_LOG_LEVEL=INFO
-      # Optional: Time zone (default: Europe/Warsaw)
+      # Optional: Time zone (default: UTC)
       - TZ=Europe/Warsaw
     restart: unless-stopped
     # Optional: Health check
@@ -161,6 +161,19 @@ root/
 │   ├── deluge.go        # Deluge JSON-RPC client
 │   ├── retentionjob.go  # Torrent removal logic
 ```
+
+## Dependencies
+
+- [gocron](https://github.com/go-co-op/gocron) - GoCron is a job scheduling package which lets you run Go functions periodically at pre-determined times using a simple, human-friendly syntax.
+- [envconfig](https://github.com/kelseyhightower/envconfig) - A Go library for managing configuration data from environment variables.
+- [log](https://github.com/charmbracelet/log) - A fancy logger for Go with stylish formatting and levels.
+- [uuid](https://github.com/google/uuid) - A Go package for working with UUIDs (Universally Unique Identifiers).
+- [date](https://github.com/rickb777/date) - A Go package for working with dates, times and ranges.
+- [testify](https://github.com/stretchr/testify) - A Go library with tools for testing and assertions.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Author
 
