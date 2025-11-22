@@ -9,4 +9,4 @@ ARG TARGETARCH
 
 COPY puff_${TARGETARCH} puff
 
-ENTRYPOINT ["./puff"]
+ENTRYPOINT ["/app/puff"]
