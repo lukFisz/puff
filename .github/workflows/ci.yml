@@ -46,8 +46,7 @@ jobs:
           SHORT_VERSION=$(echo $TAG | cut -d '.' -f 1,2)
           echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_OUTPUT
 
-      # only rc tags
-      - name: Build and push (linux/amd64,linux/arm64)
+      - name: Build and push (linux/amd64, linux/arm64) RC tags
         if: contains(github.event.release.tag_name, '-RC')
         uses: docker/build-push-action@v4
         with:
@@ -57,8 +56,7 @@ jobs:
           tags: |
             ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
 
-      # only release tags
-      - name: Build and push (linux/amd64,linux/arm64)
+      - name: Build and push (linux/amd64, linux/arm64)
         if: ${{ !contains(github.event.release.tag_name, '-RC') }}
         uses: docker/build-push-action@v4
         with:
