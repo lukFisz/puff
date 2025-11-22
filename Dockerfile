@@ -12,6 +12,9 @@ RUN go build -o puff
 FROM alpine:3.22
 LABEL authors="lukaszfiszer"
 
+ARG PUFF_CURRENT_VERSION
+ENV PUFF_CURRENT_VERSION=$PUFF_CURRENT_VERSION
+
 RUN apk add --no-cache tzdata
 
 WORKDIR /app
