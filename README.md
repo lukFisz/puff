@@ -122,6 +122,8 @@ services:
       - PUFF_DRY_RUN=false
       # Optional: Logging level (default: INFO)
       - PUFF_LOG_LEVEL=INFO
+      # Optional: Discord webhook url (default: "")
+      - PUFF_DISCORD_WEBHOOK_URL="https://webhooh.to.your.discord.channel"
       # Optional: Time zone (default: UTC)
       - TZ=Europe/Warsaw
     restart: unless-stopped
