@@ -52,7 +52,8 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
+          tags: |
+            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
 
       - name: Build and push (linux/amd64,linux/arm64)
         if: !contains(steps.get_version.outputs.VERSION, '-RC')
