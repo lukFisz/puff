@@ -16,7 +16,7 @@ import (
 const appBanner string = ` ____  _  _  ____  ____ 
 (  _ \/ )( \(  __)(  __)
  ) __/) \/ ( ) _)  ) _) 
-(__)  \____/(__)  (__)  
+(__)  \____/(__)  (__) %s
 by lukFisz
 `
 
@@ -25,7 +25,8 @@ type appContext struct {
 }
 
 func main() {
-	fmt.Print(appBanner)
+	version := os.Getenv("PUFF_CURRENT_VERSION")
+	fmt.Print(fmt.Sprintf(appBanner, version))
 	log.Print("started")
 
 	config := GetConfig()
