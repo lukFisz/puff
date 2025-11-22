@@ -14,22 +14,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-    # build
-      - name: Setup Go v1.25
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.25
-
-      - name: Build arch amd64, arm64
-        env:
-          CGO_ENABLED: 0
-          GOOS: linux
-        run: |
-          GOARCH=arm64 go build -o puff_arm64 main/*
-          GOARCH=amd64 go build -o puff_amd64 main/*
-
-      # publish
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Buildx
