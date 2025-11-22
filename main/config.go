@@ -17,6 +17,7 @@ type AppConfig struct {
 	StartDelay          string `envconfig:"PUFF_START_DELAY" default:"0s"`
 	DryRun              bool   `envconfig:"PUFF_DRY_RUN" default:"false"`
 	LogLevel            string `envconfig:"PUFF_LOG_LEVEL" default:"INFO"`
+	DiscordWebhookUrl   string `envconfig:"PUFF_DISCORD_WEBHOOK_URL" default:""`
 	TimeZone            string `envconfig:"TZ" default:"UTC"`
 }
 

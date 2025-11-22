@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,8 +29,8 @@ func main() {
 	log.Print("started")
 
 	config := GetConfig()
+	initLogger(config)
 
-	setLogLevel(config)
 	logConfig(config)
 	delayAppStart(config)
 
@@ -39,12 +40,15 @@ func main() {
 	)
 }
 
-func setLogLevel(config AppConfig) {
+func initLogger(config AppConfig) {
 	level, err := log.ParseLevel(config.LogLevel)
 	if err != nil {
 		log.Fatal("log level", "err", err)
 	}
 	log.SetLevel(level)
+
+	multi := io.MultiWriter(os.Stdout, NewDiscordClient(config))
+	log.SetOutput(multi)
 }
 
 func delayAppStart(config AppConfig) {
@@ -77,12 +81,13 @@ func runApp(config AppConfig) appContext {
 	} else {
 		log.Info("deluge client", "authentication", "successful")
 	}
+	discordClient := NewDiscordClient(config)
 	scheduler := NewScheduler(config)
 	AddCronjob(
 		scheduler,
 		"Deluge torrent retention",
 		config,
-		func() { removeExpiredTorrents(*delugeClient, config) },
+		func() { removeExpiredTorrents(*delugeClient, discordClient, config) },
 	)
 	return appContext{Scheduler: scheduler}
 }
