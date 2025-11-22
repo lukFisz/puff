@@ -2,7 +2,7 @@ name: CI
 
 on:
   release:
-    types: [published]
+    types: [ published ]
 
 jobs:
   build-image-and-push:
@@ -45,14 +45,22 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push (linux/amd64,linux/arm64)
+      - name: Build and push (linux/amd64,linux/arm64) - Release candidate
+        if: contains(steps.get_version.outputs.VERSION, '-RC')
         uses: docker/build-push-action@v4
         with:
           context: .
-          platforms: linux/${{ matrix.target-arch }}
+          platforms: linux/amd64,linux/arm64
           push: true
-          build-args: |
-            TARGET_ARCH=${{ matrix.target-arch }}
+          tags: ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
+
+      - name: Build and push (linux/amd64,linux/arm64)
+        if: !contains(steps.get_version.outputs.VERSION, '-RC')
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
           tags: |
             ghcr.io/lukfisz/puff:latest
             ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
