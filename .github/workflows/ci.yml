@@ -29,18 +29,6 @@ jobs:
             echo "IS_RC=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create GitHub release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_version.outputs.VERSION }}
-          release_name: Release ${{ steps.get_version.outputs.VERSION }}
-          prerelease: ${{ steps.get_version.outputs.IS_RC }}
-          body: |
-            Release for version ${{ steps.get_version.outputs.VERSION }}
-
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -74,3 +62,15 @@ jobs:
             ghcr.io/lukfisz/puff:latest
             ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
             ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
+
+      - name: Create GitHub release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          prerelease: ${{ steps.get_version.outputs.IS_RC }}
+          body: |
+            Release for version ${{ steps.get_version.outputs.VERSION }}
