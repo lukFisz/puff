@@ -5,6 +5,8 @@ RUN apk add --no-cache tzdata
 
 WORKDIR /app
 
+ARG TARGETARCH
+
 COPY puff_${TARGETARCH} puff
 
 ENTRYPOINT ["./puff"]
