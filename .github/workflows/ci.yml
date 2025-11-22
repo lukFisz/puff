@@ -55,14 +55,14 @@ jobs:
           tags: |
             ghcr.io/lukfisz/puff:RCRC
 
-      - name: Build and push (linux/amd64,linux/arm64)
-        if: !contains(steps.get_version.outputs.VERSION, '-RC')
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/lukfisz/puff:latest
-            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
-            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
+#      - name: Build and push (linux/amd64,linux/arm64)
+#        if: !contains(steps.get_version.outputs.VERSION, '-RC')
+#        uses: docker/build-push-action@v4
+#        with:
+#          context: .
+#          platforms: linux/amd64,linux/arm64
+#          push: true
+#          tags: |
+#            ghcr.io/lukfisz/puff:latest
+#            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
+#            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
