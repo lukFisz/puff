@@ -62,6 +62,9 @@ func delayAppStart(config AppConfig) {
 func logConfig(config AppConfig) {
 	maskedConfig := config
 	maskedConfig.DelugePassword = "***"
+	if maskedConfig.DiscordWebhookUrl != "" {
+		maskedConfig.DiscordWebhookUrl = "***"
+	}
 	prettyConfig, _ := json.MarshalIndent(maskedConfig, "", "  ")
 	log.Info("init", "app config", string(prettyConfig))
 }
