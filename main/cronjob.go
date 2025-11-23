@@ -19,9 +19,23 @@ func NewScheduler(config AppConfig) gocron.Scheduler {
 	return scheduler
 }
 
-func AddCronjob(scheduler gocron.Scheduler, jobName string, config AppConfig, job func()) {
-	cronjob, err := scheduler.NewJob(
+func ScheduleCronjob(scheduler gocron.Scheduler, jobName string, config AppConfig, job func()) gocron.Job {
+	return scheduleJob(
 		gocron.CronJob(config.Cron, true),
+		scheduler,
+		jobName,
+		job,
+	)
+}
+
+func scheduleJob(
+	jobDef gocron.JobDefinition,
+	scheduler gocron.Scheduler,
+	jobName string,
+	job func(),
+) gocron.Job {
+	cronjob, err := scheduler.NewJob(
+		jobDef,
 		gocron.NewTask(job),
 		gocron.WithEventListeners(beforeJob(), afterJob(scheduler)),
 		gocron.WithName(jobName),
@@ -30,8 +44,7 @@ func AddCronjob(scheduler gocron.Scheduler, jobName string, config AppConfig, jo
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	log.Info("scheduled", "job", jobName, "next run", getNextRun(cronjob))
+	return cronjob
 }
 
 func beforeJob() gocron.EventListener {
@@ -44,7 +57,7 @@ func afterJob(scheduler gocron.Scheduler) gocron.EventListener {
 	return gocron.AfterJobRuns(func(jobID uuid.UUID, jobName string) {
 		for _, j := range scheduler.Jobs() {
 			if j.ID() == jobID {
-				log.Info("finished", "job", jobName, "next run", getNextRun(j))
+				log.Info("finished", "job", jobName, "next run", GetNextRun(j))
 				return
 			}
 		}
@@ -52,7 +65,7 @@ func afterJob(scheduler gocron.Scheduler) gocron.EventListener {
 	})
 }
 
-func getNextRun(job gocron.Job) time.Time {
+func GetNextRun(job gocron.Job) time.Time {
 	nextRun, err := job.NextRun()
 	if err != nil {
 		log.Fatal(err.Error())

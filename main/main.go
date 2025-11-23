@@ -31,6 +31,13 @@ func main() {
 	logConfig(config)
 	delayAppStart(config)
 
+	if config.RunOnce {
+		log.Print("running once")
+		NewRemoveExpiredTorrentsJob(config)()
+		log.Print("shut down")
+		os.Exit(0)
+	}
+
 	orchestrateExecution(
 		func() appContext { return runApp(config) },
 		gracefulShutdown,
@@ -73,6 +80,7 @@ func logConfig(config AppConfig) {
   DRY_RUN: %t
   LOG_LEVEL: %s
   DISCORD_WEBHOOK_URL: ****
+  RUN_ONCE: %t
   TZ: %s`,
 		config.Cron,
 		config.DelugeUrl,
@@ -81,6 +89,7 @@ func logConfig(config AppConfig) {
 		config.StartDelay,
 		config.DryRun,
 		config.LogLevel,
+		config.RunOnce,
 		config.TimeZone,
 	)
 	log.Info("init", "app config", strConfig)
@@ -95,26 +104,28 @@ func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContex
 }
 
 func runApp(config AppConfig) appContext {
-	delugeClient := NewDelugeClient(config.DelugeUrl, config.DelugePassword, config.DelugeClientTimeoutDuration())
-	if err := delugeClient.Login(); err != nil {
-		log.Error("deluge client", "err", err)
-	} else {
-		log.Info("deluge client", "authentication", "successful")
-	}
-	discordClient := NewDiscordClient(config)
 	scheduler := NewScheduler(config)
-	AddCronjob(
+	jobName := "Deluge torrent retention"
+
+	if config.Cron == "" {
+		log.Fatal("CRON SCHEDULE cannot be empty")
+	}
+
+	cronjob := ScheduleCronjob(
 		scheduler,
-		"Deluge torrent retention",
+		jobName,
 		config,
-		func() { removeExpiredTorrents(*delugeClient, discordClient, config) },
+		NewRemoveExpiredTorrentsJob(config),
 	)
+	log.Info("scheduled", "job", jobName, "next run", GetNextRun(cronjob))
+
 	return appContext{Scheduler: scheduler}
 }
 
 func gracefulShutdown(executionContext appContext) {
 	err := executionContext.Scheduler.Shutdown()
 	if err != nil {
+		log.Fatal("scheduler", "err", err)
 	}
 	log.Print("shut down")
 }
