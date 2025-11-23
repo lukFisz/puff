@@ -19,6 +19,7 @@ type AppConfig struct {
 	LogLevel            string `envconfig:"PUFF_LOG_LEVEL" default:"INFO"`
 	DiscordWebhookUrl   string `envconfig:"PUFF_DISCORD_WEBHOOK_URL" default:""`
 	TimeZone            string `envconfig:"TZ" default:"UTC"`
+	Version             string `envconfig:"PUFF_CURRENT_VERSION" default:""`
 }
 
 func GetConfig() AppConfig {
@@ -27,8 +28,15 @@ func GetConfig() AppConfig {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	config.RetentionInSeconds()
 	return config
+}
+
+func (config AppConfig) ParseValidation() {
+	config.Location()
+	config.RetentionInSeconds()
+	config.Location()
+	config.StartDelayDuration()
+	config.DelugeClientTimeoutDuration()
 }
 
 func (config AppConfig) Location() *time.Location {
@@ -57,7 +65,7 @@ func (config AppConfig) StartDelayDuration() time.Duration {
 }
 
 func (config AppConfig) DelugeClientTimeoutDuration() time.Duration {
-	duration, err := time.ParseDuration(config.StartDelay)
+	duration, err := time.ParseDuration(config.DelugeClientTimeout)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

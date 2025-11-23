@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -17,21 +16,18 @@ const appBanner string = ` ____  _  _  ____  ____
 (  _ \/ )( \(  __)(  __)
  ) __/) \/ ( ) _)  ) _) 
 (__)  \____/(__)  (__) %s
-by lukFisz
-`
+by lukFisz`
 
 type appContext struct {
 	Scheduler gocron.Scheduler
 }
 
 func main() {
-	version := os.Getenv("PUFF_CURRENT_VERSION")
-	fmt.Print(fmt.Sprintf(appBanner, version))
-	log.Print("started")
-
 	config := GetConfig()
 	initLogger(config)
 
+	initMessage()
+	config.ParseValidation()
 	logConfig(config)
 	delayAppStart(config)
 
@@ -41,15 +37,23 @@ func main() {
 	)
 }
 
+func initMessage() {
+	version := os.Getenv("PUFF_CURRENT_VERSION")
+	logger := log.New(os.Stdout)
+	logger.SetReportTimestamp(false)
+	logger.SetReportCaller(false)
+	logger.Print(fmt.Sprintf(appBanner, version))
+	log.Print("started")
+}
+
 func initLogger(config AppConfig) {
+	multi := io.MultiWriter(os.Stdout, NewDiscordClient(config))
+	log.SetOutput(multi)
 	level, err := log.ParseLevel(config.LogLevel)
 	if err != nil {
 		log.Fatal("log level", "err", err)
 	}
 	log.SetLevel(level)
-
-	multi := io.MultiWriter(os.Stdout, NewDiscordClient(config))
-	log.SetOutput(multi)
 }
 
 func delayAppStart(config AppConfig) {
@@ -61,13 +65,26 @@ func delayAppStart(config AppConfig) {
 }
 
 func logConfig(config AppConfig) {
-	maskedConfig := config
-	maskedConfig.DelugePassword = "***"
-	if maskedConfig.DiscordWebhookUrl != "" {
-		maskedConfig.DiscordWebhookUrl = "***"
-	}
-	prettyConfig, _ := json.MarshalIndent(maskedConfig, "", "  ")
-	log.Info("init", "app config", string(prettyConfig))
+	strConfig := fmt.Sprintf(`  CRON_SCHEDULE: %s
+  DELUGE_URL: %s
+  DELUGE_PASSWORD: ****
+  DELUGE_CLIENT_TIMEOUT: %s
+  RETENTION: %s
+  START_DELAY: %s
+  DRY_RUN: %t
+  LOG_LEVEL: %s
+  DISCORD_WEBHOOK_URL: ****
+  TZ: %s`,
+		config.Cron,
+		config.DelugeUrl,
+		config.DelugeClientTimeout,
+		config.Retention,
+		config.StartDelay,
+		config.DryRun,
+		config.LogLevel,
+		config.TimeZone,
+	)
+	log.Info("init", "app config", strConfig)
 }
 
 func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContext)) {
