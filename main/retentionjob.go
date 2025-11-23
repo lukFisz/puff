@@ -7,7 +7,20 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func removeExpiredTorrents(delugeClient DelugeClient, discordClient *DiscordClient, config AppConfig) {
+func NewRemoveExpiredTorrentsJob(config AppConfig) func() {
+	delugeClient := NewDelugeClient(config.DelugeUrl, config.DelugePassword, config.DelugeClientTimeoutDuration())
+	if err := delugeClient.Login(); err != nil {
+		log.Error("deluge client", "err", err)
+	} else {
+		log.Info("deluge client", "authentication", "successful")
+	}
+	discordClient := NewDiscordClient(config)
+	return func() {
+		RemoveExpiredTorrents(*delugeClient, discordClient, config)
+	}
+}
+
+func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient *DiscordClient, config AppConfig) {
 	finishedTorrents, err := delugeClient.GetFinishedTorrents()
 	if err != nil {
 		log.Error("cannot get list of finished torrents", "err", err)

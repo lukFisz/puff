@@ -9,7 +9,7 @@ import (
 )
 
 type AppConfig struct {
-	Cron                string `envconfig:"PUFF_CRON_SCHEDULE" required:"true"`
+	Cron                string `envconfig:"PUFF_CRON_SCHEDULE"`
 	DelugeUrl           string `envconfig:"PUFF_DELUGE_URL" required:"true"`
 	DelugePassword      string `envconfig:"PUFF_DELUGE_PASSWORD" required:"true"`
 	DelugeClientTimeout string `envconfig:"PUFF_DELUGE_CLIENT_TIMEOUT" default:"2m0s"`
@@ -18,6 +18,7 @@ type AppConfig struct {
 	DryRun              bool   `envconfig:"PUFF_DRY_RUN" default:"false"`
 	LogLevel            string `envconfig:"PUFF_LOG_LEVEL" default:"INFO"`
 	DiscordWebhookUrl   string `envconfig:"PUFF_DISCORD_WEBHOOK_URL" default:""`
+	RunOnce             bool   `envconfig:"PUFF_RUN_ONCE" default:"false"`
 	TimeZone            string `envconfig:"TZ" default:"UTC"`
 	Version             string `envconfig:"PUFF_CURRENT_VERSION" default:""`
 }
