@@ -34,7 +34,6 @@ func GetConfig() AppConfig {
 func (config AppConfig) ParseValidation() {
 	config.Location()
 	config.RetentionInSeconds()
-	config.Location()
 	config.StartDelayDuration()
 	config.DelugeClientTimeoutDuration()
 }
