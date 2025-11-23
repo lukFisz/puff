@@ -26,7 +26,7 @@ func main() {
 	config := GetConfig()
 	initLogger(config)
 
-	initMessage()
+	initMessage(config)
 	config.ParseValidation()
 	logConfig(config)
 	delayAppStart(config)
@@ -37,12 +37,11 @@ func main() {
 	)
 }
 
-func initMessage() {
-	version := os.Getenv("PUFF_CURRENT_VERSION")
+func initMessage(config AppConfig) {
 	logger := log.New(os.Stdout)
 	logger.SetReportTimestamp(false)
 	logger.SetReportCaller(false)
-	logger.Print(fmt.Sprintf(appBanner, version))
+	logger.Print(fmt.Sprintf(appBanner, config.Version))
 	log.Print("started")
 }
 
