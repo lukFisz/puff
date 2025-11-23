@@ -9,13 +9,14 @@ retention period.
 
 Puff is a background application that connects to a Deluge client via JSON-RPC
 and automatically removes finished torrents according to a configurable retention policy.
-The application runs as a cron job scheduler and can be deployed as a Docker container
-with small footprint.
+The application can run as a cron job scheduler or execute the retention job once and exit.
+It can be deployed as a Docker container with a small footprint.
 
 ## Features
 
 - 🔄 Automatic removal of finished torrents after retention period
 - ⏰ Cron-based job scheduling
+- 🏃‍♂️ Run-once execution
 - 🧪 Dry-run mode for testing without actual deletion
 - 🔐 Authentication via Deluge JSON-RPC API
 - 📊 Detailed operation logging
@@ -34,9 +35,10 @@ The application is configured via environment variables:
 
 | Variable                     | Description                                                         | Required | Default Value |
 |------------------------------|---------------------------------------------------------------------|----------|---------------|
-| `PUFF_CRON_SCHEDULE`         | Cron schedule (e.g., `0 0 * * *` for daily at midnight)             | Yes      | -             |
+| `PUFF_CRON_SCHEDULE`         | Cron schedule (e.g., `0 0 * * *` for daily at midnight). Required if `PUFF_RUN_ONCE` is `false`. | No       | -             |
 | `PUFF_DELUGE_URL`            | URL to Deluge JSON-RPC API (e.g., `http://deluge.lan/json`)         | Yes      | -             |
 | `PUFF_DELUGE_PASSWORD`       | Deluge password                                                     | Yes      | -             |
+| `PUFF_RUN_ONCE`              | If `true`, the application runs the retention job once and exits.     | No       | `false`       |
 | `PUFF_DELUGE_CLIENT_TIMEOUT` | HTTP client timeout. Valid time units: ns, us (or µs), ms, s, m, h. | No       | `2m0s`        |
 | `PUFF_RETENTION`             | Retention period in ISO 8601 format (e.g., `P14D` = 14 days)        | No       | `P14D`        |
 | `PUFF_START_DELAY`           | Application startup delay                                           | No       | `0s`          |
@@ -71,6 +73,7 @@ Use [run file](./run.sh)
 
 ### Docker Execution
 
+Run with cron schedule:
 ```bash
 docker run -d \
   -e PUFF_CRON_SCHEDULE="0 0 * * *" \
@@ -78,6 +81,17 @@ docker run -d \
   -e PUFF_DELUGE_PASSWORD="your_password" \
   -e PUFF_RETENTION="P14D" \
   --name puff \
+  ghcr.io/lukfisz/puff:latest
+```
+
+Run once and exit:
+```bash
+docker run --rm \
+  -e PUFF_RUN_ONCE="true" \
+  -e PUFF_DELUGE_URL="http://url_or_ip_to_deluge/json" \
+  -e PUFF_DELUGE_PASSWORD="your_password" \
+  -e PUFF_RETENTION="P14D" \
+  --name puff-run-once \
   ghcr.io/lukfisz/puff:latest
 ```
 
@@ -138,14 +152,18 @@ services:
 
 ## How It Works
 
-1. The application connects to Deluge via JSON-RPC API
-2. Starts a job scheduler according to `PUFF_CRON_SCHEDULE`
-3. In each cycle:
-    - Retrieves a list of finished torrents
-    - Filters torrents that have exceeded the retention period (based on `time_since_download`)
-    - Removes expired torrents along with their data (if `PUFF_DRY_RUN=false`)
-    - Logs operation details, including freed disk space
-    - Sends a notification to Discord (if configured)
+1. The application connects to Deluge via JSON-RPC API.
+2. 
+   - If `PUFF_RUN_ONCE` is `true`:
+     - The retention job runs immediately once and the application exits.
+   - If `PUFF_RUN_ONCE` is `false` (default):
+     - Starts a job scheduler according to `PUFF_CRON_SCHEDULE`.
+     - In each cycle:
+         - Retrieves a list of finished torrents.
+         - Filters torrents that have exceeded the retention period (based on `time_since_download`).
+         - Removes expired torrents along with their data (if `PUFF_DRY_RUN=false`).
+         - Logs operation details, including freed disk space.
+         - Sends a notification to Discord (if configured).
 
 ## Discord Notifications
 
