@@ -60,6 +60,7 @@ Retention is specified in ISO 8601 period format:
 
 Uses standard cron format with 5 or 6 fields:
 
+- `@every 5s` - every 5 seconds
 - `0 0 * * *` - daily at midnight
 - `0 */6 * * *` - every 6 hours
 - `0 0 * * 0` - weekly on Sunday
