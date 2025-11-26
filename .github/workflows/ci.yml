@@ -47,13 +47,17 @@ jobs:
       - name: Run container writing file to /github/workspace
         run: |
           docker build -f Dockerfile-builder -t puff-builder .
-          docker run --rm \
-            -v ${{ github.workspace }}:/github/workspace \
-            puff-builder
 
-      - name: test
-        run:
-          ls -al
+      - name: Build and push Docker image test
+        if: steps.get_version.outputs.IS_RC == 'true'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            PUFF_CURRENT_VERSION=vtest
+          push: false
+          tags: ghcr.io/lukfisz/puff:test
 
 #      - name: Build and push Docker image (for RC tags)
 #        if: steps.get_version.outputs.IS_RC == 'true'
