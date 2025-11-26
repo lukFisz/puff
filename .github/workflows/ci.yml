@@ -42,6 +42,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build and copy compiled app
+        run: |
+          docker build -f Dockerfile-builder -t puff-builder .
+          docker run --rm \
+          -v ${{ github.workspace }}:/github/workspace \
+          puff-builder
+
       - name: Build and push Docker image (for RC tags)
         if: steps.get_version.outputs.IS_RC == 'true'
         uses: docker/build-push-action@v4
