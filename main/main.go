@@ -19,28 +19,53 @@ const appBanner string = ` ____  _  _  ____  ____
 (__)  \____/(__)  (__) %s
 by lukFisz`
 
+type Shutdown struct {
+}
+
 type appContext struct {
-	Scheduler gocron.Scheduler
+	Scheduler     *gocron.Scheduler
+	DiscordClient *DiscordClient
+	DelugeClient  *DelugeClient
+	AppConfig     *AppConfig
+	ShutdownChan  *chan Shutdown
+}
+
+func newAppContext(cfg AppConfig) appContext {
+	if cfg.Cron == "" {
+		log.Fatal("CRON SCHEDULE cannot be empty")
+	}
+
+	delugeClient := NewDelugeClient(cfg.DelugeUrl, cfg.DelugePassword, cfg.DelugeClientTimeoutDuration())
+	delugeClient.CheckConnection()
+
+	discordClient := NewDiscordClient(cfg)
+	scheduler := NewScheduler(cfg)
+
+	shutdowns := make(chan Shutdown)
+	return appContext{
+		Scheduler:     &scheduler,
+		DiscordClient: discordClient,
+		DelugeClient:  delugeClient,
+		AppConfig:     &cfg,
+		ShutdownChan:  &shutdowns,
+	}
 }
 
 func main() {
 	config := GetConfig()
+	config.ParseValidation()
+
 	initLogger(config)
 
 	initMessage(config)
-	config.ParseValidation()
 	logConfig(config)
+
+	ctx := newAppContext(config)
+
 	delayAppStart(config)
 
-	if config.RunOnce {
-		log.Print("running once")
-		NewRemoveExpiredTorrentsJob(config)()
-		log.Print("shut down")
-		os.Exit(0)
-	}
-
 	orchestrateExecution(
-		func() appContext { return runApp(config) },
+		func() appContext { return runApp(ctx) },
 		gracefulShutdown,
 	)
 }
@@ -100,32 +125,33 @@ func logConfig(config AppConfig) {
 func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContext)) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM, os.Interrupt)
-	executionContext := executeLogic()
-	<-sigs
-	cleanUp(executionContext)
+	ctx := executeLogic()
+	select {
+	case <-sigs:
+	case <-*ctx.ShutdownChan:
+	}
+	cleanUp(ctx)
 }
 
-func runApp(config AppConfig) appContext {
-	scheduler := NewScheduler(config)
+func runApp(ctx appContext) appContext {
 	jobName := "Deluge torrent retention"
-
-	if config.Cron == "" {
-		log.Fatal("CRON SCHEDULE cannot be empty")
+	var job gocron.Job
+	delTorrentsJob := func() { RemoveExpiredTorrents(*ctx.DelugeClient, ctx.DiscordClient, *ctx.AppConfig) }
+	if ctx.AppConfig.RunOnce {
+		job = NewOneTimeJob(jobName, func() {
+			delTorrentsJob()
+			*ctx.ShutdownChan <- Shutdown{}
+		}, ctx)
+	} else {
+		job = ScheduleCronjob(ctx, jobName, delTorrentsJob)
+		log.Info("scheduled", "job", jobName, "next run", GetNextRun(job))
 	}
 
-	cronjob := ScheduleCronjob(
-		scheduler,
-		jobName,
-		config,
-		NewRemoveExpiredTorrentsJob(config),
-	)
-	log.Info("scheduled", "job", jobName, "next run", GetNextRun(cronjob))
-
-	return appContext{Scheduler: scheduler}
+	return ctx
 }
 
-func gracefulShutdown(executionContext appContext) {
-	err := executionContext.Scheduler.Shutdown()
+func gracefulShutdown(ctx appContext) {
+	err := (*ctx.Scheduler).Shutdown()
 	if err != nil {
 		log.Fatal("scheduler", "err", err)
 	}

@@ -7,23 +7,11 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func NewRemoveExpiredTorrentsJob(config AppConfig) func() {
-	delugeClient := NewDelugeClient(config.DelugeUrl, config.DelugePassword, config.DelugeClientTimeoutDuration())
-	if err := delugeClient.Login(); err != nil {
-		log.Error("deluge client", "err", err)
-	} else {
-		log.Info("deluge client", "authentication", "successful")
-	}
-	discordClient := NewDiscordClient(config)
-	return func() {
-		RemoveExpiredTorrents(*delugeClient, discordClient, config)
-	}
-}
-
 func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient *DiscordClient, config AppConfig) {
 	finishedTorrents, err := delugeClient.GetFinishedTorrents()
 	if err != nil {
 		log.Error("cannot get list of finished torrents", "err", err)
+		return
 	}
 	torrentsToRemove := make([]Torrent, 0)
 	for _, torrent := range finishedTorrents {
@@ -31,7 +19,7 @@ func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient *DiscordClie
 			torrentsToRemove = append(torrentsToRemove, torrent)
 		}
 	}
-	if err == nil && len(torrentsToRemove) == 0 {
+	if len(torrentsToRemove) == 0 {
 		log.Info("no expired torrents to remove")
 		return
 	}

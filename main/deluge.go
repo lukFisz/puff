@@ -77,6 +77,14 @@ func NewDelugeClient(baseURL string, password string, timeout time.Duration) *De
 	}
 }
 
+func (delugeClient *DelugeClient) CheckConnection() {
+	if err := delugeClient.Login(); err != nil {
+		log.Error("deluge client", "err", err)
+	} else {
+		log.Info("deluge client", "authentication", "successful")
+	}
+}
+
 func (delugeClient *DelugeClient) request(method string, params interface{}, retry401 bool) (json.RawMessage, error) {
 	delugeClient.idCount++
 	reqData := jsonRpcRequest{

@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+set -e
+
 mkdir -p target
 
 go build -o target/puff ./main

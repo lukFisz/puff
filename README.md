@@ -25,7 +25,7 @@ It can be deployed as a Docker container with a small footprint.
 
 ## Requirements
 
-- Go 1.25 or newer
+- Go 1.25
 - Access to a Deluge instance with WebUI and JSON-RPC API enabled
 - (Optional) Docker for containerized deployment
 
