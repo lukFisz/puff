@@ -10,6 +10,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/go-co-op/gocron/v2"
+	"github.com/muesli/termenv"
 )
 
 const appBanner string = ` ____  _  _  ____  ____ 
@@ -55,6 +56,7 @@ func initMessage(config AppConfig) {
 func initLogger(config AppConfig) {
 	multi := io.MultiWriter(os.Stdout, NewDiscordClient(config))
 	log.SetOutput(multi)
+	log.SetColorProfile(termenv.TrueColor)
 	level, err := log.ParseLevel(config.LogLevel)
 	if err != nil {
 		log.Fatal("log level", "err", err)
