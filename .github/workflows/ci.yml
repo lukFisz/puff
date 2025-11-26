@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  pull_request:
+    types: [ synchronize ]
   push:
     tags:
       - 'v*'
@@ -53,28 +55,28 @@ jobs:
           push: true
           tags: ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
 
-      - name: Build and push Docker image
-        if: steps.get_version.outputs.IS_RC == 'false'
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            PUFF_CURRENT_VERSION=${{ steps.get_version.outputs.VERSION }}
-          push: true
-          tags: |
-            ghcr.io/lukfisz/puff:latest
-            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
-            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
-
-      - name: Create GitHub release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_version.outputs.VERSION }}
-          release_name: Release ${{ steps.get_version.outputs.VERSION }}
-          prerelease: ${{ steps.get_version.outputs.IS_RC }}
-          body: |
-            Release for version ${{ steps.get_version.outputs.VERSION }}
+#      - name: Build and push Docker image
+#        if: steps.get_version.outputs.IS_RC == 'false'
+#        uses: docker/build-push-action@v4
+#        with:
+#          context: .
+#          platforms: linux/amd64,linux/arm64
+#          build-args: |
+#            PUFF_CURRENT_VERSION=${{ steps.get_version.outputs.VERSION }}
+#          push: true
+#          tags: |
+#            ghcr.io/lukfisz/puff:latest
+#            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
+#            ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
+#
+#      - name: Create GitHub release
+#        id: create_release
+#        uses: actions/create-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: ${{ steps.get_version.outputs.VERSION }}
+#          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+#          prerelease: ${{ steps.get_version.outputs.IS_RC }}
+#          body: |
+#            Release for version ${{ steps.get_version.outputs.VERSION }}
