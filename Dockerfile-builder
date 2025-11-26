@@ -10,4 +10,4 @@ COPY main/* .
 RUN GOOS="linux" GOARCH="amd64" go build -o puff_amd64
 RUN GOOS="linux" GOARCH="arm64" go build -o puff_arm64
 
-CMD ["cp", "puff_*", "/github/workspace/"]
+CMD ["cp", "./puff_arm64", "./puff_amd64", "/github/workspace"]
