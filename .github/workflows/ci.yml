@@ -47,7 +47,7 @@ jobs:
 
       - name: Build and copy compiled app
         run: |
-          docker build -f Dockerfile-builder puff-builder .
+          docker build -f Dockerfile-builder -t puff-builder .
           docker run --rm \
           -v ${{ github.workspace }}:/github/workspace \
           puff-builder
