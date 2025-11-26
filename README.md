@@ -3,7 +3,7 @@
 Application for automatic torrent management in Deluge. Removes finished torrents that have exceeded a specified
 retention period.
 
-![img.png](img/preview.png)
+![preview.gif](img/preview.gif)
 
 ## Description
 
@@ -208,7 +208,7 @@ root/
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.  
 
 ## Author
 
