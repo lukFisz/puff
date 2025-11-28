@@ -3,6 +3,7 @@
 Application for automatic torrent management in Deluge. Removes finished torrents that have exceeded a specified
 retention period.
 
+
 ![preview.gif](img/preview.gif)
 
 ## Description
