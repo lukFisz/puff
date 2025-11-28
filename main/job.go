@@ -14,7 +14,7 @@ const runOnceTag = "run-once-job"
 func NewScheduler(config AppConfig) gocron.Scheduler {
 	scheduler, err := gocron.NewScheduler(
 		gocron.WithLocation(config.Location()),
-		gocron.WithStopTimeout(1*time.Minute),
+		gocron.WithStopTimeout(time.Minute),
 	)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -78,7 +78,7 @@ func afterJob(ctx *appContext) gocron.EventListener {
 			if j.ID() == jobID {
 				if slices.Contains(j.Tags(), runOnceTag) {
 					log.Info("finished", "job", jobName)
-					go func() { *ctx.ShutdownChan <- Shutdown{} }()
+					*ctx.ShutdownChan <- true
 					return
 				}
 				log.Info("finished", "job", jobName, "next run", GetNextRun(j))

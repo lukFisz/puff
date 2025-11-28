@@ -19,15 +19,12 @@ const appBanner string = ` ____  _  _  ____  ____
 (__)  \____/(__)  (__) %s
 by lukFisz`
 
-type Shutdown struct {
-}
-
 type appContext struct {
 	Scheduler     *gocron.Scheduler
 	DiscordClient *DiscordClient
 	DelugeClient  *DelugeClient
 	AppConfig     *AppConfig
-	ShutdownChan  *chan Shutdown
+	ShutdownChan  *chan bool
 }
 
 func newAppContext(cfg AppConfig) appContext {
@@ -41,7 +38,7 @@ func newAppContext(cfg AppConfig) appContext {
 	discordClient := NewDiscordClient(cfg)
 	scheduler := NewScheduler(cfg)
 
-	shutdowns := make(chan Shutdown)
+	shutdowns := make(chan bool)
 	return appContext{
 		Scheduler:     &scheduler,
 		DiscordClient: discordClient,
