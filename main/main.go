@@ -138,10 +138,7 @@ func runApp(ctx appContext) appContext {
 	var job gocron.Job
 	delTorrentsJob := func() { RemoveExpiredTorrents(*ctx.DelugeClient, ctx.DiscordClient, *ctx.AppConfig) }
 	if ctx.AppConfig.RunOnce {
-		job = NewOneTimeJob(jobName, func() {
-			delTorrentsJob()
-			*ctx.ShutdownChan <- Shutdown{}
-		}, ctx)
+		job = NewOneTimeJob(jobName, delTorrentsJob, ctx)
 	} else {
 		job = ScheduleCronjob(ctx, jobName, delTorrentsJob)
 		log.Info("scheduled", "job", jobName, "next run", GetNextRun(job))

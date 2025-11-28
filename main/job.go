@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const runOnceTag = "run-once-job"
+
 func NewScheduler(config AppConfig) gocron.Scheduler {
 	scheduler, err := gocron.NewScheduler(
 		gocron.WithLocation(config.Location()),
@@ -38,7 +40,7 @@ func NewOneTimeJob(jobName string, job func(), ctx appContext) gocron.Job {
 		jobName,
 		job,
 		gocron.WithEventListeners(beforeJob(), afterJob(&ctx)),
-		gocron.WithTags("run-once-job"),
+		gocron.WithTags(runOnceTag),
 	)
 }
 
@@ -74,7 +76,7 @@ func afterJob(ctx *appContext) gocron.EventListener {
 	return gocron.AfterJobRuns(func(jobID uuid.UUID, jobName string) {
 		for _, j := range (*ctx.Scheduler).Jobs() {
 			if j.ID() == jobID {
-				if slices.Contains(j.Tags(), "run-once-job") {
+				if slices.Contains(j.Tags(), runOnceTag) {
 					log.Info("finished", "job", jobName)
 					go func() { *ctx.ShutdownChan <- Shutdown{} }()
 					return
