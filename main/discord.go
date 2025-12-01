@@ -67,7 +67,7 @@ func (dc *DiscordClient) SendError(message string) {
 }
 
 func (dc *DiscordClient) Write(p []byte) (n int, err error) {
-	if regexp.MustCompile(`(?i)( ERRO | FATA )`).Match(p) {
+	if regexp.MustCompile(`(?i)(ERRO|FATA)`).Match(p) {
 		dc.SendError(string(p))
 	}
 	return len(p), nil
