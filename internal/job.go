@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"slices"
@@ -23,7 +23,7 @@ func NewScheduler(config AppConfig) gocron.Scheduler {
 	return scheduler
 }
 
-func ScheduleCronjob(ctx appContext, jobName string, job func()) gocron.Job {
+func ScheduleCronjob(ctx AppContext, jobName string, job func()) gocron.Job {
 	return scheduleJob(
 		gocron.CronJob(ctx.AppConfig.Cron, true),
 		*ctx.Scheduler,
@@ -33,7 +33,7 @@ func ScheduleCronjob(ctx appContext, jobName string, job func()) gocron.Job {
 	)
 }
 
-func NewOneTimeJob(jobName string, job func(), ctx appContext) gocron.Job {
+func NewOneTimeJob(jobName string, job func(), ctx AppContext) gocron.Job {
 	return scheduleJob(
 		gocron.OneTimeJob(gocron.OneTimeJobStartImmediately()),
 		*ctx.Scheduler,
@@ -73,7 +73,7 @@ func beforeJob() gocron.EventListener {
 	})
 }
 
-func afterJob(ctx *appContext) gocron.EventListener {
+func afterJob(ctx *AppContext) gocron.EventListener {
 	return gocron.AfterJobRuns(func(jobID uuid.UUID, jobName string) {
 		for _, j := range (*ctx.Scheduler).Jobs() {
 			if j.ID() == jobID {

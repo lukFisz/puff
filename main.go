@@ -5,11 +5,11 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	puff "puff/internal"
 	"syscall"
 	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/go-co-op/gocron/v2"
 	"github.com/muesli/termenv"
 )
 
@@ -19,37 +19,8 @@ const appBanner string = ` ____  _  _  ____  ____
 (__)  \____/(__)  (__) %s
 by lukFisz`
 
-type appContext struct {
-	Scheduler     *gocron.Scheduler
-	DiscordClient *DiscordClient
-	DelugeClient  *DelugeClient
-	AppConfig     *AppConfig
-	ShutdownChan  *chan bool
-}
-
-func newAppContext(cfg AppConfig) appContext {
-	if cfg.Cron == "" {
-		log.Fatal("CRON SCHEDULE cannot be empty")
-	}
-
-	delugeClient := NewDelugeClient(cfg.DelugeUrl, cfg.DelugePassword, cfg.DelugeClientTimeoutDuration())
-	delugeClient.CheckConnection()
-
-	discordClient := NewDiscordClient(cfg)
-	scheduler := NewScheduler(cfg)
-
-	shutdowns := make(chan bool)
-	return appContext{
-		Scheduler:     &scheduler,
-		DiscordClient: discordClient,
-		DelugeClient:  delugeClient,
-		AppConfig:     &cfg,
-		ShutdownChan:  &shutdowns,
-	}
-}
-
 func main() {
-	config := GetConfig()
+	config := puff.GetConfig()
 	config.ParseValidation()
 
 	initLogger(config)
@@ -57,17 +28,17 @@ func main() {
 	initMessage(config)
 	logConfig(config)
 
-	ctx := newAppContext(config)
+	ctx := puff.NewAppContext(config)
 
 	delayAppStart(config)
 
 	orchestrateExecution(
-		func() appContext { return runApp(ctx) },
+		func() puff.AppContext { return runApp(ctx) },
 		gracefulShutdown,
 	)
 }
 
-func initMessage(config AppConfig) {
+func initMessage(config puff.AppConfig) {
 	logger := log.New(os.Stdout)
 	logger.SetReportTimestamp(false)
 	logger.SetReportCaller(false)
@@ -75,8 +46,8 @@ func initMessage(config AppConfig) {
 	log.Print("started")
 }
 
-func initLogger(config AppConfig) {
-	multi := io.MultiWriter(os.Stdout, NewDiscordClient(config))
+func initLogger(config puff.AppConfig) {
+	multi := io.MultiWriter(os.Stdout, puff.NewDiscordClient(config))
 	log.SetOutput(multi)
 	log.SetColorProfile(termenv.TrueColor)
 	level, err := log.ParseLevel(config.LogLevel)
@@ -86,7 +57,7 @@ func initLogger(config AppConfig) {
 	log.SetLevel(level)
 }
 
-func delayAppStart(config AppConfig) {
+func delayAppStart(config puff.AppConfig) {
 	startDelayDuration := config.StartDelayDuration()
 	if startDelayDuration.Seconds() > 0 {
 		log.Info("start delay", "duration", startDelayDuration)
@@ -94,7 +65,7 @@ func delayAppStart(config AppConfig) {
 	}
 }
 
-func logConfig(config AppConfig) {
+func logConfig(config puff.AppConfig) {
 	strConfig := fmt.Sprintf(`  CRON_SCHEDULE: %s
   DELUGE_URL: %s
   DELUGE_PASSWORD: ****
@@ -119,7 +90,7 @@ func logConfig(config AppConfig) {
 	log.Info("init", "app config", strConfig)
 }
 
-func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContext)) {
+func orchestrateExecution(executeLogic func() puff.AppContext, cleanUp func(puff.AppContext)) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM, os.Interrupt)
 	ctx := executeLogic()
@@ -130,19 +101,19 @@ func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContex
 	cleanUp(ctx)
 }
 
-func runApp(ctx appContext) appContext {
+func runApp(ctx puff.AppContext) puff.AppContext {
 	jobName := "Deluge torrent retention"
-	delTorrentsJob := func() { RemoveExpiredTorrents(*ctx.DelugeClient, ctx.DiscordClient, *ctx.AppConfig) }
+	delTorrentsJob := func() { puff.RemoveExpiredTorrents(*ctx.DelugeClient, *ctx.DiscordClient, *ctx.AppConfig) }
 	if ctx.AppConfig.RunOnce {
-		NewOneTimeJob(jobName, delTorrentsJob, ctx)
+		puff.NewOneTimeJob(jobName, delTorrentsJob, ctx)
 	} else {
-		ScheduleCronjob(ctx, jobName, delTorrentsJob)
+		puff.ScheduleCronjob(ctx, jobName, delTorrentsJob)
 	}
 
 	return ctx
 }
 
-func gracefulShutdown(ctx appContext) {
+func gracefulShutdown(ctx puff.AppContext) {
 	err := (*ctx.Scheduler).Shutdown()
 	if err != nil {
 		log.Fatal("scheduler", "err", err)

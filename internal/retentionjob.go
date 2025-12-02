@@ -1,13 +1,13 @@
-package main
+package internal
 
 import (
-	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/log"
 )
 
-func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient *DiscordClient, config AppConfig) {
+func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient DiscordClient, config AppConfig) {
 	finishedTorrents, err := delugeClient.GetFinishedTorrents()
 	if err != nil {
 		log.Error("cannot get list of finished torrents", "err", err)
@@ -33,37 +33,40 @@ func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient *DiscordClie
 	for _, torrent := range torrentsToRemove {
 		totalBytes += torrent.TotalSizeInBytes
 	}
-	prettyList, err := json.MarshalIndent(torrentsToRemove, "", "  ")
-	if err != nil {
-		log.Info(
-			"remove expired torrents",
-			"total released space", FormattedBytes(totalBytes),
-			"removed torrents", torrentsToRemove,
-		)
-		sendInfoAboutTorrentsToDiscord(discordClient, torrentsToRemove, totalBytes, torrentsToRemove)
-	} else {
-		strPrettyList := string(prettyList)
-		log.Info(
-			"remove expired torrents",
-			"total released space", FormattedBytes(totalBytes),
-			"removed torrents", strPrettyList,
-		)
-		sendInfoAboutTorrentsToDiscord(discordClient, torrentsToRemove, totalBytes, strPrettyList)
+
+	formattedTorrents := formatTorrentsToPrint(torrentsToRemove)
+	log.Info(
+		"remove expired torrents",
+		"total released space", FormattedBytes(totalBytes),
+		"removed torrents", formattedTorrents,
+	)
+	sendInfoAboutTorrentsToDiscord(discordClient, torrentsToRemove, totalBytes, formattedTorrents)
+}
+
+func formatTorrentsToPrint(torrents []Torrent) string {
+	formated := make([]string, 0)
+	for i, torrent := range torrents {
+		formated = append(formated, fmt.Sprintf("%d. %s (%s)", i+1, torrent.Name, FormattedBytes(torrent.TotalSizeInBytes)))
 	}
+	return strings.Join(formated, "\n")
 }
 
 func sendInfoAboutTorrentsToDiscord(
-	discordClient *DiscordClient,
+	discordClient DiscordClient,
 	torrentsToRemove []Torrent,
 	totalBytes int64,
-	listOfTorrents interface{},
+	listOfTorrents string,
 ) {
 	discordClient.SendInfo(
-		fmt.Sprintf(`
-### Retention Job
+		fmt.Sprintf(
+			`### Retention Job
 Removed torrents: %d
 Total released space: %s
-Expired torrents: %s
-`, len(torrentsToRemove), FormattedBytes(totalBytes), listOfTorrents),
+List of torrents: 
+%s`,
+			len(torrentsToRemove),
+			FormattedBytes(totalBytes),
+			listOfTorrents,
+		),
 	)
 }
