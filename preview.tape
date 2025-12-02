@@ -77,5 +77,5 @@ Type@0ms `  --name puff ghcr.io/lukfisz/puff:latest`
 Show
 Sleep 1s
 Enter
-Wait+Screen /deluge/
-Sleep 8s
+Wait+Screen /no expired torrents to remove/
+Sleep 6s
