@@ -63,6 +63,7 @@ func scheduleJob(
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	log.Info("scheduled", "job", jobName, "next run", getNextRun(cronjob))
 	return cronjob
 }
 
@@ -81,7 +82,7 @@ func afterJob(ctx *appContext) gocron.EventListener {
 					*ctx.ShutdownChan <- true
 					return
 				}
-				log.Info("finished", "job", jobName, "next run", GetNextRun(j))
+				log.Info("finished", "job", jobName, "next run", getNextRun(j))
 				return
 			}
 		}
@@ -89,7 +90,7 @@ func afterJob(ctx *appContext) gocron.EventListener {
 	})
 }
 
-func GetNextRun(job gocron.Job) time.Time {
+func getNextRun(job gocron.Job) time.Time {
 	nextRun, err := job.NextRun()
 	if err != nil {
 		log.Fatal(err.Error())

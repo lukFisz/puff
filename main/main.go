@@ -132,13 +132,11 @@ func orchestrateExecution(executeLogic func() appContext, cleanUp func(appContex
 
 func runApp(ctx appContext) appContext {
 	jobName := "Deluge torrent retention"
-	var job gocron.Job
 	delTorrentsJob := func() { RemoveExpiredTorrents(*ctx.DelugeClient, ctx.DiscordClient, *ctx.AppConfig) }
 	if ctx.AppConfig.RunOnce {
-		job = NewOneTimeJob(jobName, delTorrentsJob, ctx)
+		NewOneTimeJob(jobName, delTorrentsJob, ctx)
 	} else {
-		job = ScheduleCronjob(ctx, jobName, delTorrentsJob)
-		log.Info("scheduled", "job", jobName, "next run", GetNextRun(job))
+		ScheduleCronjob(ctx, jobName, delTorrentsJob)
 	}
 
 	return ctx
