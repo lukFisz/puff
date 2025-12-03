@@ -1,0 +1,24 @@
+### Auth
+POST http://deluge.lan/json
+Content-Type: application/json
+
+{
+  "method": "auth.login",
+  "params": ["deluge"],
+  "id": 0
+}
+
+### Get list of expired torrents
+POST http://deluge.lan/json
+Content-Type: application/json
+
+{
+  "method": "core.get_torrents_status",
+  "params": [
+    {
+      "is_finished": [true]
+    },
+    ["hash", "total_size", "name", "time_since_download"]
+  ],
+  "id": 0
+}
