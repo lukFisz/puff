@@ -23,23 +23,23 @@ func NewScheduler(config AppConfig) gocron.Scheduler {
 	return scheduler
 }
 
-func ScheduleCronjob(ctx AppContext, jobName string, job func()) gocron.Job {
+func ScheduleCronjob(jobName string, job func(), ctx *AppContext) gocron.Job {
 	return scheduleJob(
 		gocron.CronJob(ctx.AppConfig.Cron, true),
 		*ctx.Scheduler,
 		jobName,
 		job,
-		gocron.WithEventListeners(beforeJob(), afterJob(&ctx)),
+		gocron.WithEventListeners(beforeJob(), afterJob(ctx)),
 	)
 }
 
-func NewOneTimeJob(jobName string, job func(), ctx AppContext) gocron.Job {
+func NewOneTimeJob(jobName string, job func(), ctx *AppContext) gocron.Job {
 	return scheduleJob(
 		gocron.OneTimeJob(gocron.OneTimeJobStartImmediately()),
 		*ctx.Scheduler,
 		jobName,
 		job,
-		gocron.WithEventListeners(beforeJob(), afterJob(&ctx)),
+		gocron.WithEventListeners(beforeJob(), afterJob(ctx)),
 		gocron.WithTags(runOnceTag),
 	)
 }

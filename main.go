@@ -33,7 +33,7 @@ func main() {
 	delayAppStart(config)
 
 	orchestrateExecution(
-		func() puff.AppContext { return runApp(ctx) },
+		func() *puff.AppContext { return runApp(ctx) },
 		gracefulShutdown,
 	)
 }
@@ -90,7 +90,7 @@ func logConfig(config puff.AppConfig) {
 	log.Info("init", "app config", strConfig)
 }
 
-func orchestrateExecution(executeLogic func() puff.AppContext, cleanUp func(puff.AppContext)) {
+func orchestrateExecution(executeLogic func() *puff.AppContext, cleanUp func(*puff.AppContext)) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM, os.Interrupt)
 	ctx := executeLogic()
@@ -101,19 +101,19 @@ func orchestrateExecution(executeLogic func() puff.AppContext, cleanUp func(puff
 	cleanUp(ctx)
 }
 
-func runApp(ctx puff.AppContext) puff.AppContext {
+func runApp(ctx *puff.AppContext) *puff.AppContext {
 	jobName := "Deluge torrent retention"
-	delTorrentsJob := func() { puff.RemoveExpiredTorrents(*ctx.DelugeClient, *ctx.DiscordClient, *ctx.AppConfig) }
+	delTorrentsJob := func() { puff.RemoveExpiredTorrents(ctx) }
 	if ctx.AppConfig.RunOnce {
 		puff.NewOneTimeJob(jobName, delTorrentsJob, ctx)
 	} else {
-		puff.ScheduleCronjob(ctx, jobName, delTorrentsJob)
+		puff.ScheduleCronjob(jobName, delTorrentsJob, ctx)
 	}
 
 	return ctx
 }
 
-func gracefulShutdown(ctx puff.AppContext) {
+func gracefulShutdown(ctx *puff.AppContext) {
 	err := (*ctx.Scheduler).Shutdown()
 	if err != nil {
 		log.Fatal("scheduler", "err", err)

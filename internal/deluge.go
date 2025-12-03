@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/charmbracelet/log"
 )
@@ -68,11 +67,11 @@ func FormattedBytes(bytes int64) string {
 	}
 }
 
-func NewDelugeClient(baseURL string, password string, timeout time.Duration) *DelugeClient {
+func NewDelugeClient(cfg AppConfig) *DelugeClient {
 	return &DelugeClient{
-		BaseURL:  baseURL,
-		Password: password,
-		Client:   &http.Client{Timeout: timeout},
+		BaseURL:  cfg.DelugeUrl,
+		Password: cfg.DelugePassword,
+		Client:   &http.Client{Timeout: cfg.DelugeClientTimeoutDuration()},
 		idCount:  0,
 	}
 }

@@ -13,19 +13,19 @@ type AppContext struct {
 	ShutdownChan  *chan bool
 }
 
-func NewAppContext(cfg AppConfig) AppContext {
+func NewAppContext(cfg AppConfig) *AppContext {
 	if cfg.Cron == "" {
 		log.Fatal("CRON SCHEDULE cannot be empty")
 	}
 
-	delugeClient := NewDelugeClient(cfg.DelugeUrl, cfg.DelugePassword, cfg.DelugeClientTimeoutDuration())
+	delugeClient := NewDelugeClient(cfg)
 	delugeClient.CheckConnection()
 
 	discordClient := NewDiscordClient(cfg)
 	scheduler := NewScheduler(cfg)
 
 	shutdowns := make(chan bool)
-	return AppContext{
+	return &AppContext{
 		Scheduler:     &scheduler,
 		DiscordClient: discordClient,
 		DelugeClient:  delugeClient,

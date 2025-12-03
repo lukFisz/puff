@@ -7,15 +7,15 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient DiscordClient, config AppConfig) {
-	finishedTorrents, err := delugeClient.GetFinishedTorrents()
+func RemoveExpiredTorrents(ctx *AppContext) {
+	finishedTorrents, err := ctx.DelugeClient.GetFinishedTorrents()
 	if err != nil {
 		log.Error("cannot get list of finished torrents", "err", err)
 		return
 	}
 	torrentsToRemove := make([]Torrent, 0)
 	for _, torrent := range finishedTorrents {
-		if torrent.SecondsSinceDownload > config.RetentionInSeconds() {
+		if torrent.SecondsSinceDownload > ctx.AppConfig.RetentionInSeconds() {
 			torrentsToRemove = append(torrentsToRemove, torrent)
 		}
 	}
@@ -23,7 +23,7 @@ func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient DiscordClien
 		log.Info("no expired torrents to remove")
 		return
 	}
-	err = delugeClient.RemoveTorrentsWithData(torrentsToRemove, config.DryRun)
+	err = ctx.DelugeClient.RemoveTorrentsWithData(torrentsToRemove, ctx.AppConfig.DryRun)
 	if err != nil {
 		log.Error("remove torrents failed", "err", err)
 		return
@@ -40,7 +40,7 @@ func RemoveExpiredTorrents(delugeClient DelugeClient, discordClient DiscordClien
 		"total released space", FormattedBytes(totalBytes),
 		"removed torrents", formattedTorrents,
 	)
-	sendInfoAboutTorrentsToDiscord(discordClient, torrentsToRemove, totalBytes, formattedTorrents)
+	sendInfoAboutTorrentsToDiscord(ctx.DiscordClient, torrentsToRemove, totalBytes, formattedTorrents)
 }
 
 func formatTorrentsToPrint(torrents []Torrent) string {
@@ -52,7 +52,7 @@ func formatTorrentsToPrint(torrents []Torrent) string {
 }
 
 func sendInfoAboutTorrentsToDiscord(
-	discordClient DiscordClient,
+	discordClient *DiscordClient,
 	torrentsToRemove []Torrent,
 	totalBytes int64,
 	listOfTorrents string,
