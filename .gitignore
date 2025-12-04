@@ -1,3 +1,4 @@
 build-and-publish.sh
 /target
 .idea
+AGENTS.md

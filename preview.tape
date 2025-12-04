@@ -63,9 +63,6 @@ Set Width 1350
 Set Height 800
 
 Hide
-Type@0ms `docker pull ghcr.io/lukfisz/puff:latest` Enter
-Type@0ms `clear` Enter
-Sleep 300ms
 Type@0ms `docker run --rm \` Enter
 Type@0ms `  -e PUFF_CRON_SCHEDULE="@every 5s" \` Enter
 Type@0ms `  -e PUFF_START_DELAY="1s" \` Enter
