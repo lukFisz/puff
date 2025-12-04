@@ -32,6 +32,8 @@ func main() {
 
 	delayAppStart(config)
 
+	ctx.DelugeClient.CheckConnection()
+
 	orchestrateExecution(
 		func() *puff.AppContext { return runApp(ctx) },
 		gracefulShutdown,

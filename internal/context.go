@@ -19,8 +19,6 @@ func NewAppContext(cfg AppConfig) *AppContext {
 	}
 
 	delugeClient := NewDelugeClient(cfg)
-	delugeClient.CheckConnection()
-
 	discordClient := NewDiscordClient(cfg)
 	scheduler := NewScheduler(cfg)
 
