@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build-and-publish:
@@ -46,7 +46,7 @@ jobs:
         run: |
           docker build -f Dockerfile-builder -t puff-builder .
           docker run --rm \
-          -v ${{ github.workspace }}:/github/workspace \
+          -v ${{ github.workspace }}:/output \
           puff-builder
 
       - name: Build and push Docker image (for RC tags)

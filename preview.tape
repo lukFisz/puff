@@ -69,11 +69,11 @@ Type@0ms `  -e PUFF_START_DELAY="1s" \` Enter
 Type@0ms `  -e PUFF_DRY_RUN="true" \` Enter
 Type@0ms `  -e PUFF_DELUGE_URL="http://deluge.lan/json" \` Enter
 Type@0ms `  -e PUFF_DELUGE_PASSWORD="deluge" \` Enter
-Type@0ms `  -e PUFF_RETENTION="P20D" \` Enter
+Type@0ms `  -e PUFF_RETENTION="P14D" \` Enter
 Type@0ms `  -e TZ="Europe/Warsaw" \` Enter
 Type@0ms `  --name puff ghcr.io/lukfisz/puff:latest`
 Show
 Sleep 1s
 Enter
-Wait+Screen /no expired torrents to remove/
+Wait+Screen /running job/
 Sleep 5s
