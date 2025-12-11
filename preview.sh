@@ -10,28 +10,28 @@ if [ -z "$PVER" ]; then
     exit 1
 fi
 
-echo "-----------------"
+echo "-----------------------------------"
 echo "Builder"
-echo "-----------------"
+echo "-----------------------------------"
 docker build \
     -f Dockerfile-builder \
     . -t puff-builder
 docker run -v "./target:/output" --rm puff-builder
 
-echo "-----------------"
+echo "-----------------------------------"
 echo "Image (using version label: $PVER)"
-echo "-----------------"
+echo "-----------------------------------"
 docker build \
     --build-arg PUFF_CURRENT_VERSION=$PVER \
     -f Dockerfile \
     ./target -t ghcr.io/lukfisz/puff:latest
 
-echo "-----------------"
+echo "-----------------------------------"
 echo "VHS"
-echo "-----------------"
+echo "-----------------------------------"
 vhs preview.tape
 
-echo "-----------------"
+echo "-----------------------------------"
 echo "Cleaning"
-echo "-----------------"
+echo "-----------------------------------"
 rm -f ./target/puff_*
