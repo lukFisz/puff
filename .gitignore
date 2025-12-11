@@ -3,3 +3,4 @@ build-and-publish.sh
 .idea
 AGENTS.md
 .cache
+.DS_Store
