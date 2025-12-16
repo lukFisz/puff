@@ -72,7 +72,7 @@ func logConfig(config puff.AppConfig) {
 	if config.DiskFreeSpaceThreshold == nil {
 		diskThreshold = "DISK_FREE_SPACE_TRESHOLD: NONE"
 	} else {
-		diskThreshold = fmt.Sprintf("DISK_FREE_SPACE_TRESHOLD: %s\n  DISK_PATH: %s", config.DiskFreeSpaceThreshold, config.DiskPath)
+		diskThreshold = fmt.Sprintf("DISK_FREE_SPACE_TRESHOLD: %s\n  DISK_PATH: %s", *config.DiskFreeSpaceThreshold, config.DiskPath)
 	}
 	strConfig := fmt.Sprintf(`  CRON_SCHEDULE: %s
   DELUGE_URL: %s

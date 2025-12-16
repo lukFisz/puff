@@ -13,16 +13,16 @@ func RemoveExpiredTorrents(ctx *AppContext) {
 		usageThreshold := ctx.AppConfig.DiskFreeSpaceThresholdInBytes()
 		freeSpaceOfDisk, err := ctx.AppConfig.FreeSpaceOfDiskPathInBytes()
 		if err != nil {
-			log.Error("")
+			log.Error("cannot check disk stats", "err", err)
 			return
 		}
-		diskFreeSpaceHumanFormat := humanize.IBytes(*freeSpaceOfDisk)
-		thresholdHumanFormat := humanize.IBytes(*usageThreshold)
+		diskFreeSpaceHumanFormat := humanize.Bytes(*freeSpaceOfDisk)
+		thresholdHumanFormat := humanize.Bytes(*usageThreshold)
 		if *freeSpaceOfDisk > *usageThreshold {
 			log.Info("skipping retention, threshold not excedded", "free space", diskFreeSpaceHumanFormat, "threshold", thresholdHumanFormat)
 			return
 		}
-		exceededByHumanFormat := humanize.IBytes(*usageThreshold - *freeSpaceOfDisk)
+		exceededByHumanFormat := humanize.Bytes(*usageThreshold - *freeSpaceOfDisk)
 		log.Info("threshold excedded", "threshold", thresholdHumanFormat, "free space", diskFreeSpaceHumanFormat, "exceeded by", exceededByHumanFormat)
 	}
 	finishedTorrents, err := ctx.DelugeClient.GetFinishedTorrents()

@@ -25,9 +25,9 @@ type Torrent struct {
 }
 
 type jsonRpcRequest struct {
-	Method string      `json:"method"`
-	Params interface{} `json:"params"`
-	ID     int         `json:"id"`
+	Method string `json:"method"`
+	Params any    `json:"params"`
+	ID     int    `json:"id"`
 }
 
 type jsonRpcResponse struct {
@@ -118,7 +118,7 @@ func (delugeClient *DelugeClient) request(method string, params interface{}, ret
 	}
 
 	if rpcResp.Error != nil {
-		message := rpcResp.Error.(map[string]interface{})["message"]
+		message := rpcResp.Error.(map[string]any)["message"]
 		if retry401 && message != nil && message.(string) == "Not authenticated" {
 			if err := delugeClient.Login(); err != nil {
 				return nil, err
@@ -192,14 +192,14 @@ func (delugeClient *DelugeClient) Login() error {
 func (delugeClient *DelugeClient) GetTorrentsStatus(fields map[string]interface{}) (map[string]interface{}, error) {
 	result, err := delugeClient.request(
 		"core.get_torrents_status",
-		[]interface{}{fields, []string{"name", "state", "progress", "hash"}},
+		[]any{fields, []string{"name", "state", "progress", "hash"}},
 		true,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	var torrents map[string]interface{}
+	var torrents map[string]any
 	if err := json.Unmarshal(result, &torrents); err != nil {
 		return nil, err
 	}
@@ -209,8 +209,8 @@ func (delugeClient *DelugeClient) GetTorrentsStatus(fields map[string]interface{
 func (delugeClient *DelugeClient) GetFinishedTorrents() ([]Torrent, error) {
 	result, err := delugeClient.request(
 		"core.get_torrents_status",
-		[]interface{}{
-			map[string]interface{}{
+		[]any{
+			map[string]any{
 				"is_finished": []bool{true},
 			},
 			[]string{"hash", "total_size", "name", "time_since_download"},

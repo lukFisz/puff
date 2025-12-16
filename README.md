@@ -46,7 +46,7 @@ The application is configured via environment variables:
 | `PUFF_START_DELAY`           | Application startup delay                                           | No       | `0s`          |
 | `PUFF_DRY_RUN`               | Test mode (does not delete torrents)                                | No       | `false`       |
 | `PUFF_LOG_LEVEL`             | Logging level (DEBUG, INFO, WARN, ERROR)                            | No       | `INFO`        |
-| `PUFF_DISK_FREE_SPACE_THRESHOLD` | Minimum free disk space threshold (e.g., `100GiB`, `1.5TiB`). If set, torrents will be removed when free space falls below this value. | No       | -             |
+| `PUFF_DISK_FREE_SPACE_THRESHOLD` | Minimum free disk space threshold (e.g., `100GB`, `1.5TB`, `100GiB`). If set, torrents will be removed when free space falls below this value. | No       | -             |
 | `PUFF_DISK_PATH`             | Path to the disk to monitor for free space                          | No       | `/mnt/puff/monitor` |
 | `PUFF_DISCORD_WEBHOOK_URL` | Discord webhook URL for notifications                               | No       | -             |
 | `TZ`                         | Time zone                                                           | No       | `UTC`         |

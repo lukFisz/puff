@@ -41,6 +41,10 @@ func (config AppConfig) ParseValidation() {
 	config.StartDelayDuration()
 	config.DelugeClientTimeoutDuration()
 	config.DiskFreeSpaceThresholdInBytes()
+	_, err := config.FreeSpaceOfDiskPathInBytes()
+	if err != nil {
+		log.Error("DISK_PATH validation", "err", err)
+	}
 }
 
 func (config AppConfig) Location() *time.Location {
