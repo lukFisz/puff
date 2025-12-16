@@ -23,6 +23,7 @@ It can be deployed as a Docker container with a small footprint.
 - 📊 Detailed operation logging
 - 🐳 Ready-to-use Docker image
 - 💬 Discord notifications for job summaries and errors
+- 💾 Disk space monitoring
 
 ## Requirements
 
@@ -45,6 +46,8 @@ The application is configured via environment variables:
 | `PUFF_START_DELAY`           | Application startup delay                                           | No       | `0s`          |
 | `PUFF_DRY_RUN`               | Test mode (does not delete torrents)                                | No       | `false`       |
 | `PUFF_LOG_LEVEL`             | Logging level (DEBUG, INFO, WARN, ERROR)                            | No       | `INFO`        |
+| `PUFF_DISK_FREE_SPACE_THRESHOLD` | Minimum free disk space threshold (e.g., `100GiB`, `1.5TiB`). If set, torrents will be removed when free space falls below this value. | No       | -             |
+| `PUFF_DISK_PATH`             | Path to the disk to monitor for free space                          | No       | `/mnt/puff/monitor` |
 | `PUFF_DISCORD_WEBHOOK_URL` | Discord webhook URL for notifications                               | No       | -             |
 | `TZ`                         | Time zone                                                           | No       | `UTC`         |
 
@@ -138,11 +141,18 @@ services:
       - PUFF_DRY_RUN=false
       # Optional: Logging level (default: INFO)
       - PUFF_LOG_LEVEL=INFO
+      # Optional: Disk free space threshold (e.g., 100GB, 1.5TB)
+      - PUFF_DISK_FREE_SPACE_THRESHOLD=100GB
+      # Optional: Path to disk to monitor (default: /mnt/puff/monitor)
+      # - PUFF_DISK_PATH=/mnt/puff/monitor
       # Optional: Discord webhook url (default: "")
-      - PUFF_DISCORD_WEBHOOK_URL="https://webhooh.to.your.discord.channel"
+      - PUFF_DISCORD_WEBHOOK_URL="https://webhook.to.your.discord.channel"
       # Optional: Time zone (default: UTC)
       - TZ=Europe/Warsaw
     restart: unless-stopped
+    # Uncomment to mount a volume for disk space monitoring
+    # volumes:
+    #   - /path/to/your/disk:/mnt/puff/monitor:ro
     # Optional: Health check
     healthcheck:
       test: [ "CMD", "pgrep", "-f", "puff" ]
@@ -155,17 +165,18 @@ services:
 ## How It Works
 
 1. The application connects to Deluge via JSON-RPC API.
-2. 
-   - If `PUFF_RUN_ONCE` is `true`:
-     - The retention job runs immediately once and the application exits.
-   - If `PUFF_RUN_ONCE` is `false` (default):
-     - Starts a job scheduler according to `PUFF_CRON_SCHEDULE`.
-     - In each cycle:
-         - Retrieves a list of finished torrents.
-         - Filters torrents that have exceeded the retention period (based on `time_since_download`).
-         - Removes expired torrents along with their data (if `PUFF_DRY_RUN=false`).
-         - Logs operation details, including freed disk space.
-         - Sends a notification to Discord (if configured).
+2. App flow:
+    - If `PUFF_RUN_ONCE` is `true`:
+      - The retention job runs immediately once and the application exits.
+    - If `PUFF_RUN_ONCE` is `false` (default):
+      - Starts a job scheduler according to `PUFF_CRON_SCHEDULE`.
+      - In each cycle:
+          - If `PUFF_DISK_FREE_SPACE_THRESHOLD` is set, checks if threshold was exceeded.
+          - Retrieves a list of finished torrents.
+          - Filters torrents that have exceeded the retention period (based on `time_since_download`).
+          - Removes expired torrents along with their data (if `PUFF_DRY_RUN=false`).
+          - Logs operation details, including freed disk space.
+          - Sends a notification to Discord (if configured).
 
 ## Discord Notifications
 

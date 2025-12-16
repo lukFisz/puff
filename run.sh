@@ -14,5 +14,6 @@ export PUFF_RETENTION="P5D"
 export PUFF_LOG_LEVEL="debug"
 export PUFF_RUN_ONCE="false"
 export TZ="Europe/Warsaw"
+export PUFF_DISK_FREE_SPACE_THRESHOLD="150GiB"
 
 ./target/puff

@@ -13,9 +13,9 @@ import (
 	"github.com/muesli/termenv"
 )
 
-const appBanner string = ` ____  _  _  ____  ____ 
+const appBanner string = ` ____  _  _  ____  ____
 (  _ \/ )( \(  __)(  __)
- ) __/) \/ ( ) _)  ) _) 
+ ) __/) \/ ( ) _)  ) _)
 (__)  \____/(__)  (__) %s
 by lukFisz`
 
@@ -68,6 +68,12 @@ func delayAppStart(config puff.AppConfig) {
 }
 
 func logConfig(config puff.AppConfig) {
+	var diskThreshold string
+	if config.DiskFreeSpaceThreshold == nil {
+		diskThreshold = "DISK_FREE_SPACE_TRESHOLD: NONE"
+	} else {
+		diskThreshold = fmt.Sprintf("DISK_FREE_SPACE_TRESHOLD: %s\n  DISK_PATH: %s", config.DiskFreeSpaceThreshold, config.DiskPath)
+	}
 	strConfig := fmt.Sprintf(`  CRON_SCHEDULE: %s
   DELUGE_URL: %s
   DELUGE_PASSWORD: ****
@@ -78,6 +84,7 @@ func logConfig(config puff.AppConfig) {
   LOG_LEVEL: %s
   DISCORD_WEBHOOK_URL: ****
   RUN_ONCE: %t
+  %s
   TZ: %s`,
 		config.Cron,
 		config.DelugeUrl,
@@ -87,6 +94,7 @@ func logConfig(config puff.AppConfig) {
 		config.DryRun,
 		config.LogLevel,
 		config.RunOnce,
+		diskThreshold,
 		config.TimeZone,
 	)
 	log.Info("init", "app config", strConfig)

@@ -5,9 +5,26 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
+	"github.com/dustin/go-humanize"
 )
 
 func RemoveExpiredTorrents(ctx *AppContext) {
+	if ctx.AppConfig.DiskFreeSpaceThreshold != nil {
+		usageThreshold := ctx.AppConfig.DiskFreeSpaceThresholdInBytes()
+		freeSpaceOfDisk, err := ctx.AppConfig.FreeSpaceOfDiskPathInBytes()
+		if err != nil {
+			log.Error("")
+			return
+		}
+		diskFreeSpaceHumanFormat := humanize.IBytes(*freeSpaceOfDisk)
+		thresholdHumanFormat := humanize.IBytes(*usageThreshold)
+		if *freeSpaceOfDisk > *usageThreshold {
+			log.Info("skipping retention, threshold not excedded", "free space", diskFreeSpaceHumanFormat, "threshold", thresholdHumanFormat)
+			return
+		}
+		exceededByHumanFormat := humanize.IBytes(*usageThreshold - *freeSpaceOfDisk)
+		log.Info("threshold excedded", "threshold", thresholdHumanFormat, "free space", diskFreeSpaceHumanFormat, "exceeded by", exceededByHumanFormat)
+	}
 	finishedTorrents, err := ctx.DelugeClient.GetFinishedTorrents()
 	if err != nil {
 		log.Error("cannot get list of finished torrents", "err", err)
@@ -62,7 +79,7 @@ func sendInfoAboutTorrentsToDiscord(
 			`### Retention Job
 Removed torrents: %d
 Total released space: %s
-List of torrents: 
+List of torrents:
 %s`,
 			len(torrentsToRemove),
 			FormattedBytes(totalBytes),
