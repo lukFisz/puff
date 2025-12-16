@@ -27,7 +27,7 @@ docker build \
     ./target -t ghcr.io/lukfisz/puff:latest
 
 echo "-----------------------------------"
-echo "VHS"
+echo "VHS "
 echo "-----------------------------------"
 vhs preview.tape
 
