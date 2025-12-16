@@ -75,5 +75,5 @@ Type@0ms `  --name puff ghcr.io/lukfisz/puff:latest`
 Show
 Sleep 1s
 Enter
-Wait+Screen@30s /running job/
+Wait+Screen@15s /running job/
 Sleep 5s

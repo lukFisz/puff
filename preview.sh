@@ -34,4 +34,4 @@ vhs preview.tape
 echo "-----------------------------------"
 echo "Cleaning"
 echo "-----------------------------------"
-rm -f ./target/puff_*
+rm -f ./target/puff-linux-*

@@ -31,16 +31,6 @@ jobs:
             echo "IS_RC=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Generate new
-        run: |
-          ./preview.sh ${{ steps.get_version.outputs.VERSION }}
-
-      # commit new preview.git
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: update preview ${{ steps.get_version.outputs.VERSION }}"
-          branch: main
-
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
 
