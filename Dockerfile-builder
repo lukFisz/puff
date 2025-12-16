@@ -8,7 +8,7 @@ RUN go mod download
 COPY internal/ internal/
 COPY main.go .
 
-RUN GOOS="linux" GOARCH="amd64" go build -o puff_amd64
-RUN GOOS="linux" GOARCH="arm64" go build -o puff_arm64
+RUN GOOS="linux" GOARCH="amd64" go build -o puff-linux-amd64
+RUN GOOS="linux" GOARCH="arm64" go build -o puff-linux-arm64
 
-CMD ["cp", "puff_arm64", "puff_amd64", "/output"]
+CMD ["cp", "puff-linux-arm64", "puff-linux-amd64", "/output"]

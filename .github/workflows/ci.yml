@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Extract version from tag
         id: get_version
@@ -28,6 +30,16 @@ jobs:
           else
             echo "IS_RC=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Generate new
+        run: |
+          ./preview.sh ${{ steps.get_version.outputs.VERSION }}
+
+      # commit new preview.git
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update preview ${{ steps.get_version.outputs.VERSION }}"
+          branch: main
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -74,14 +86,32 @@ jobs:
             ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.SHORT_VERSION }}
             ghcr.io/lukfisz/puff:${{ steps.get_version.outputs.VERSION }}
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # prepare changelog
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" HEAD)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD)
+          fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create GitHub release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          files: |
+            puff-linux-amd64
+            puff-linux-arm64
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           release_name: Release ${{ steps.get_version.outputs.VERSION }}
           prerelease: ${{ steps.get_version.outputs.IS_RC }}
           body: |
-            Release for version ${{ steps.get_version.outputs.VERSION }}
+            ## Changes
+            ${{ steps.changelog.outputs.changelog }}
