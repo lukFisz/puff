@@ -16,7 +16,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 50
+          fetch-tags: true
 
       - name: Extract version from tag
         id: get_version
@@ -82,7 +83,7 @@ jobs:
           # prepare changelog
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -z "$PREV_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" HEAD)
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)")
           else
             CHANGELOG=$(git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD)
           fi
@@ -97,8 +98,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            puff-linux-amd64
-            puff-linux-arm64
+            ${{ github.workspace }}/puff-linux-amd64
+            ${{ github.workspace }}/puff-linux-arm64
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           release_name: Release ${{ steps.get_version.outputs.VERSION }}
           prerelease: ${{ steps.get_version.outputs.IS_RC }}
