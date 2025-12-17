@@ -10,7 +10,6 @@ if [ -z "$output_path" ]; then
     exit 1
 fi
 
-
 echo "-----------------------------------"
 echo "Puff builder"
 echo "-----------------------------------"
