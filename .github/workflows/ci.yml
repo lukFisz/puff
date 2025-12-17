@@ -46,10 +46,16 @@ jobs:
 
       - name: Build and copy compiled app
         run: |
-          docker build -f Dockerfile-builder -t puff-builder .
-          docker run --rm \
-          -v ${{ github.workspace }}:/output \
-          puff-builder
+          chmod +x build.sh
+          ./build.sh "${{ github.workspace }}"
+
+      - name: Create preview.gif and push
+        run: |
+          chmod +x preview.sh
+          ./preview.sh "${{ steps.get_version.outputs.VERSION }}"
+          git add img/preview.gif
+          git commit -m 'chore: update preview.gif'
+          git push origin master
 
       - name: Build and push Docker image (for RC tags)
         if: steps.get_version.outputs.IS_RC == 'true'

@@ -57,23 +57,12 @@
 
 Output img/preview.gif
 
-Set Shell "zsh"
+Set Shell "bash"
 Set FontSize 17
 Set Width 1350
 Set Height 800
 
-Hide
-Type@0ms `docker run --rm \` Enter
-Type@0ms `  -e PUFF_CRON_SCHEDULE="@every 5s" \` Enter
-Type@0ms `  -e PUFF_START_DELAY="1s" \` Enter
-Type@0ms `  -e PUFF_DRY_RUN="true" \` Enter
-Type@0ms `  -e PUFF_DELUGE_URL="http://deluge.lan/json" \` Enter
-Type@0ms `  -e PUFF_DELUGE_PASSWORD="deluge" \` Enter
-Type@0ms `  -e PUFF_RETENTION="P14D" \` Enter
-Type@0ms `  -e TZ="Europe/Warsaw" \` Enter
-Type@0ms `  --name puff ghcr.io/lukfisz/puff:latest`
-Show
+Type@80ms `puff --preview` Enter
 Sleep 1s
-Enter
 Wait+Screen@15s /running job/
 Sleep 5s

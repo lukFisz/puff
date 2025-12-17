@@ -11,27 +11,17 @@ if [ -z "$PVER" ]; then
 fi
 
 echo "-----------------------------------"
-echo "Builder"
+echo "Puff builder"
 echo "-----------------------------------"
 docker build \
-    -f Dockerfile-builder \
-    . -t puff-builder
+    -f builder.Dockerfile \
+    . -t ghcr.io/lukfisz/puff-builder
 docker run -v "./target:/output" --rm puff-builder
 
 echo "-----------------------------------"
-echo "Image (using version label: $PVER)"
+echo "Generate preview image"
 echo "-----------------------------------"
 docker build \
-    --build-arg PUFF_CURRENT_VERSION=$PVER \
-    -f Dockerfile \
-    ./target -t ghcr.io/lukfisz/puff:latest
-
-echo "-----------------------------------"
-echo "VHS "
-echo "-----------------------------------"
-vhs preview.tape
-
-echo "-----------------------------------"
-echo "Cleaning"
-echo "-----------------------------------"
-rm -f ./target/puff-linux-*
+    -f preview.Dockerfile \
+    . -t ghcr.io/lukfisz/puff-preview
+docker run --rm -v $PWD:/vhs ghcr.io/lukfisz/puff-preview
