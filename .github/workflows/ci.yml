@@ -93,9 +93,9 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            puff-linux-amd64
-            puff-linux-arm64
+          # files: |
+          # puff-linux-amd64
+          # puff-linux-arm64
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           name: Release ${{ steps.get_version.outputs.VERSION }}
           prerelease: ${{ steps.get_version.outputs.IS_RC }}
