@@ -24,4 +24,7 @@ docker build \
     --build-arg PUFF_CURRENT_VERSION=$PVER \
     -f preview.Dockerfile \
     . -t ghcr.io/lukfisz/puff-preview
-docker run --rm -v $PWD:/vhs ghcr.io/lukfisz/puff-preview
+docker run --rm \
+    -v $PWD:/mnt/puff/monitor \
+    -v $PWD:/vhs \
+    ghcr.io/lukfisz/puff-preview
