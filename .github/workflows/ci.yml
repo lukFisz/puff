@@ -69,6 +69,8 @@ jobs:
               ghcr.io/lukfisz/puff-preview
           echo "-----------------------------------"
           echo "Push generated gif"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add img/preview.gif
           git commit -m 'chore: update preview.gif ${{ steps.get_version.outputs.VERSION }}'
           git push origin master
@@ -115,9 +117,6 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          # files: |
-          # puff-linux-amd64
-          # puff-linux-arm64
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           name: Release ${{ steps.get_version.outputs.VERSION }}
           prerelease: ${{ steps.get_version.outputs.IS_RC }}
