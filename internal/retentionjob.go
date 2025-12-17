@@ -25,7 +25,7 @@ func RemoveExpiredTorrents(ctx *AppContext) {
 		exceededByHumanFormat := humanize.Bytes(*usageThreshold - *freeSpaceOfDisk)
 		log.Info("threshold excedded", "threshold", thresholdHumanFormat, "free space", diskFreeSpaceHumanFormat, "exceeded by", exceededByHumanFormat)
 	}
-	finishedTorrents, err := ctx.DelugeClient.GetFinishedTorrents()
+	finishedTorrents, err := (*ctx.TorrentClient).GetFinishedTorrents()
 	if err != nil {
 		log.Error("cannot get list of finished torrents", "err", err)
 		return
@@ -40,7 +40,7 @@ func RemoveExpiredTorrents(ctx *AppContext) {
 		log.Info("no expired torrents to remove")
 		return
 	}
-	err = ctx.DelugeClient.RemoveTorrentsWithData(torrentsToRemove, ctx.AppConfig.DryRun)
+	err = (*ctx.TorrentClient).RemoveTorrentsWithData(torrentsToRemove, ctx.AppConfig.DryRun)
 	if err != nil {
 		log.Error("remove torrents failed", "err", err)
 		return

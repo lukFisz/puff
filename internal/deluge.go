@@ -9,6 +9,13 @@ import (
 	"github.com/charmbracelet/log"
 )
 
+type TorrentClient interface {
+	CheckConnection()
+	Login() error
+	GetFinishedTorrents() ([]Torrent, error)
+	RemoveTorrentsWithData(torrents []Torrent, dryRun bool) error
+}
+
 type DelugeClient struct {
 	BaseURL  string
 	Password string
@@ -187,23 +194,6 @@ func (delugeClient *DelugeClient) Login() error {
 	}
 
 	return nil
-}
-
-func (delugeClient *DelugeClient) GetTorrentsStatus(fields map[string]interface{}) (map[string]interface{}, error) {
-	result, err := delugeClient.request(
-		"core.get_torrents_status",
-		[]any{fields, []string{"name", "state", "progress", "hash"}},
-		true,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	var torrents map[string]any
-	if err := json.Unmarshal(result, &torrents); err != nil {
-		return nil, err
-	}
-	return torrents, nil
 }
 
 func (delugeClient *DelugeClient) GetFinishedTorrents() ([]Torrent, error) {

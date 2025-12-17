@@ -32,7 +32,7 @@ func main() {
 
 	delayAppStart(config)
 
-	ctx.DelugeClient.CheckConnection()
+	(*ctx.TorrentClient).CheckConnection()
 
 	orchestrateExecution(
 		func() *puff.AppContext { return runApp(ctx) },

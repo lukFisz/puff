@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"flag"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -24,14 +25,19 @@ type AppConfig struct {
 	RunOnce                bool    `envconfig:"PUFF_RUN_ONCE" default:"false"`
 	TimeZone               string  `envconfig:"TZ" default:"UTC"`
 	Version                string  `envconfig:"PUFF_CURRENT_VERSION" default:""`
+	Preview                bool
 }
 
 func GetConfig() AppConfig {
+	preview := flag.Bool("preview", false, "Run in preview mode with mock torrent client")
+	flag.Parse()
+
 	var config AppConfig
 	err := envconfig.Process("", &config)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	config.Preview = *preview
 	return config
 }
 
