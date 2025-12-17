@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/x/ansi"
 )
 
 type DiscordClient struct {
@@ -68,7 +69,8 @@ func (dc *DiscordClient) SendError(message string) {
 
 func (dc *DiscordClient) Write(p []byte) (n int, err error) {
 	if regexp.MustCompile(`(?i)(ERRO|FATA)`).Match(p) {
-		dc.SendError(string(p))
+		cleaned := ansi.Strip(string(p))
+		dc.SendError(cleaned)
 	}
 	return len(p), nil
 }

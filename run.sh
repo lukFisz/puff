@@ -7,7 +7,7 @@ mkdir -p target
 go build -o target/puff
 
 export PUFF_CRON_SCHEDULE="0/10 * * * * *"
-export PUFF_DELUGE_URL="http://deluge.lan/json"
+export PUFF_DELUGE_URL="http://deluge.lsadsdan/json"
 export PUFF_DELUGE_PASSWORD="deluge"
 export PUFF_DRY_RUN="true"
 export PUFF_RETENTION="P5D"
