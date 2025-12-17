@@ -50,6 +50,7 @@ jobs:
           ./build.sh "${{ github.workspace }}"
 
       - name: Create preview.gif and push
+        # if: steps.get_version.outputs.IS_RC == 'false'
         run: |
           chmod +x ./preview.sh
           ./preview.sh "${{ steps.get_version.outputs.VERSION }}"
