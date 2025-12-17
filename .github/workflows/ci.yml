@@ -48,11 +48,12 @@ jobs:
         run: |
           echo "-----------------------------------"
           echo "Puff builder"
+          echo "-----------------------------------"
           docker build \
               -f builder.Dockerfile \
               . -t ghcr.io/lukfisz/puff-builder
           docker run \
-              -v "${{ github.workspace }}:/output" \
+              -v "$PWD:/output" \
               --rm ghcr.io/lukfisz/puff-builder
 
       - name: Create preview.gif and push
@@ -60,15 +61,18 @@ jobs:
         run: |
           echo "-----------------------------------"
           echo "Generate preview image"
+          echo "-----------------------------------"
           docker build \
               --build-arg PUFF_CURRENT_VERSION=${{ steps.get_version.outputs.VERSION }} \
               -f preview.Dockerfile \
               . -t ghcr.io/lukfisz/puff-preview
           docker run --rm \
+              -v $PWD:/mnt/puff/monitor \
               -v $PWD:/vhs \
               ghcr.io/lukfisz/puff-preview
           echo "-----------------------------------"
           echo "Push generated gif"
+          echo "-----------------------------------"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout master
