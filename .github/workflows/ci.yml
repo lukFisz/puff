@@ -71,9 +71,11 @@ jobs:
           echo "Push generated gif"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout master
           git add img/preview.gif
           git commit -m 'chore: update preview.gif ${{ steps.get_version.outputs.VERSION }}'
           git push origin master
+          git checkout ${{ steps.get_version.outputs.VERSION }}
 
       - name: Build and push Docker image (for RC tags)
         if: steps.get_version.outputs.IS_RC == 'true'
