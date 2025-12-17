@@ -11,8 +11,15 @@ go build -o target/puff
 # Run locally (uses run.sh with example env vars)
 ./run.sh
 
-# Run tests (currently no tests in the project)
+# Run tests
 go test ./...
+
+# Run tests with coverage
+go test ./... -coverprofile=coverage.out
+go tool cover -html=coverage.out
+
+# Run tests verbosely
+go test ./... -v
 ```
 
 ## Environment Variables

@@ -293,10 +293,65 @@ Key third-party libraries:
 
 ## Testing
 
-### Current State
-- **No tests currently exist in the project**
-- `go test ./...` will run but find no tests
-- This is documented in CLAUDE.md
+### Running Tests
+
+```bash
+# Run all tests
+go test ./...
+
+# Run with verbose output
+go test ./... -v
+
+# Run with coverage
+go test ./... -coverprofile=coverage.out
+go tool cover -html=coverage.out
+
+# Run specific package tests
+go test ./internal -v
+
+# Run specific test
+go test ./internal -run TestRemoveExpiredTorrents
+
+# Run benchmarks
+go test ./internal -bench=.
+```
+
+### Test Structure
+
+Tests are located in `internal/*_test.go` files:
+- `config_test.go` - Config parsing and validation tests
+- `deluge_test.go` - DelugeClient and formatting tests
+- `discord_test.go` - DiscordClient and notification tests
+- `disk_test.go` - Disk space utilities tests
+- `retentionjob_test.go` - Retention logic and context tests
+
+### Mock Client
+
+`MockTorrentClient` (`internal/mock_torrent_client.go`) is available for testing:
+- Implements `TorrentClient` interface
+- Records all method calls
+- Configurable return values and errors
+- Used in retention job tests
+
+Example usage:
+```go
+mockClient := NewMockTorrentClient()
+mockClient.GetFinishedTorrentsResult = []Torrent{...}
+mockClient.GetFinishedTorrentsError = nil
+
+var client TorrentClient = mockClient
+// Use in tests
+```
+
+### Test Coverage
+
+Current coverage: ~33% (focus on core business logic)
+- Config validation: ✅ Covered
+- Retention logic: ✅ Covered
+- Discord client: ✅ Covered
+- Disk utilities: ✅ Covered
+- Deluge client: ⚠️ Partial (HTTP integration not tested)
+- Job scheduling: ⚠️ Partial (basic tests only)
 
 ### If Adding Tests
 - Place test files adjacent to source: `internal/config_test.go`

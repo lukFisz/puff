@@ -4,3 +4,4 @@ build-and-publish.sh
 .cache
 .DS_Store
 .crush
+coverage.out
