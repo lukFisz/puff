@@ -1,8 +1,6 @@
 build-and-publish.sh
 /target
 .idea
-AGENTS.md
 .cache
 .DS_Store
-CLAUDE.md
 .crush
