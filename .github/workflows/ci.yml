@@ -46,12 +46,12 @@ jobs:
 
       - name: Build and copy compiled app
         run: |
-          chmod +x build.sh
+          chmod +x ./build.sh
           ./build.sh "${{ github.workspace }}"
 
       - name: Create preview.gif and push
         run: |
-          chmod +x preview.sh
+          chmod +x ./preview.sh
           ./preview.sh "${{ steps.get_version.outputs.VERSION }}"
           git add img/preview.gif
           git commit -m 'chore: update preview.gif'
