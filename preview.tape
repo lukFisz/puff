@@ -65,4 +65,4 @@ Set Height 800
 Type@80ms `puff --preview` Enter
 Sleep 1s
 Wait+Screen@15s /running job/
-Sleep 5s
+Sleep 10s
