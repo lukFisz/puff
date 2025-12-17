@@ -11,6 +11,14 @@ if [ -z "$PVER" ]; then
 fi
 
 echo "-----------------------------------"
+echo "Puff builder"
+echo "-----------------------------------"
+docker build \
+    -f builder.Dockerfile \
+    . -t ghcr.io/lukfisz/puff-builder
+docker run -v "./target:/output" --rm ghcr.io/lukfisz/puff-builder
+
+echo "-----------------------------------"
 echo "Generate preview image"
 echo "-----------------------------------"
 docker build \

@@ -46,16 +46,31 @@ jobs:
 
       - name: Build and copy compiled app
         run: |
-          chmod +x ./build.sh
-          ./build.sh "${{ github.workspace }}"
+          echo "-----------------------------------"
+          echo "Puff builder"
+          docker build \
+              -f builder.Dockerfile \
+              . -t ghcr.io/lukfisz/puff-builder
+          docker run \
+              -v "${{ github.workspace }}:/output" \
+              --rm ghcr.io/lukfisz/puff-builder
 
       - name: Create preview.gif and push
         # if: steps.get_version.outputs.IS_RC == 'false'
         run: |
-          chmod +x ./preview.sh
-          ./preview.sh "${{ steps.get_version.outputs.VERSION }}"
+          echo "-----------------------------------"
+          echo "Generate preview image"
+          docker build \
+              --build-arg PUFF_CURRENT_VERSION=${{ steps.get_version.outputs.VERSION }} \
+              -f preview.Dockerfile \
+              . -t ghcr.io/lukfisz/puff-preview
+          docker run --rm \
+              -v $PWD:/vhs \
+              ghcr.io/lukfisz/puff-preview
+          echo "-----------------------------------"
+          echo "Push generated gif"
           git add img/preview.gif
-          git commit -m 'chore: update preview.gif'
+          git commit -m 'chore: update preview.gif ${{ steps.get_version.outputs.VERSION }}'
           git push origin master
 
       - name: Build and push Docker image (for RC tags)
