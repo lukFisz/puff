@@ -10,6 +10,7 @@ import (
 )
 
 const runOnceTag = "run-once-job"
+const previewJobTag = "preview-job"
 
 func NewScheduler(config AppConfig) gocron.Scheduler {
 	scheduler, err := gocron.NewScheduler(
@@ -24,12 +25,19 @@ func NewScheduler(config AppConfig) gocron.Scheduler {
 }
 
 func ScheduleCronjob(jobName string, job func(), ctx *AppContext) gocron.Job {
+	options := make([]gocron.JobOption, 0)
+	options = append(options, gocron.WithEventListeners(beforeJob(), afterJob(ctx)))
+	if ctx.AppConfig.Preview {
+		options = append(options, gocron.JobOption(gocron.WithStartImmediately()))
+		options = append(options, gocron.WithTags(previewJobTag))
+	}
 	return scheduleJob(
 		gocron.CronJob(ctx.AppConfig.Cron, true),
 		*ctx.Scheduler,
 		jobName,
 		job,
-		gocron.WithEventListeners(beforeJob(), afterJob(ctx)),
+		*ctx.AppConfig,
+		options...,
 	)
 }
 
@@ -39,6 +47,7 @@ func NewOneTimeJob(jobName string, job func(), ctx *AppContext) gocron.Job {
 		*ctx.Scheduler,
 		jobName,
 		job,
+		*ctx.AppConfig,
 		gocron.WithEventListeners(beforeJob(), afterJob(ctx)),
 		gocron.WithTags(runOnceTag),
 	)
@@ -49,6 +58,7 @@ func scheduleJob(
 	scheduler gocron.Scheduler,
 	jobName string,
 	job func(),
+	appCfg AppConfig,
 	opts ...gocron.JobOption,
 ) gocron.Job {
 	cronjob, err := scheduler.NewJob(
@@ -63,7 +73,13 @@ func scheduleJob(
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	log.Info("scheduled", "job", jobName, "next run", getNextRun(cronjob))
+
+	if appCfg.Preview {
+		log.Info("scheduled", "job", jobName, "next run", time.Now().In(appCfg.Location()))
+	} else {
+		log.Info("scheduled", "job", jobName, "next run", getNextRun(cronjob))
+	}
+
 	return cronjob
 }
 

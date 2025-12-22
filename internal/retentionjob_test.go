@@ -247,7 +247,7 @@ func TestNewAppContext(t *testing.T) {
 		DelugeUrl:           "http://test",
 		DelugePassword:      "test",
 		DelugeClientTimeout: "2m",
-		Preview:             true, // Use preview mode to avoid actual connection
+		Preview:             true,
 		DiscordWebhookUrl:   "",
 		TimeZone:            "UTC",
 	}

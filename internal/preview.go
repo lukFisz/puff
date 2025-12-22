@@ -27,6 +27,5 @@ func (p *PreviewTorrentClient) GetFinishedTorrents() ([]Torrent, error) {
 }
 
 func (p *PreviewTorrentClient) RemoveTorrentsWithData(torrents []Torrent, dryRun bool) error {
-	log.Info("preview mode: torrents removal skipped")
 	return nil
 }

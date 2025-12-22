@@ -13,6 +13,7 @@ export PUFF_DRY_RUN="true"
 export PUFF_RETENTION="P5D"
 export PUFF_LOG_LEVEL="debug"
 export PUFF_RUN_ONCE="false"
+# export PUFF_PREVIEW_MODE="true"
 export TZ="Europe/Warsaw"
 
 ./target/puff
