@@ -11,7 +11,7 @@ func NewPreviewTorrentClient() *PreviewTorrentClient {
 }
 
 func (p *PreviewTorrentClient) CheckConnection() {
-	log.Info("preview client", "authentication", "skipped (preview mode)")
+	log.Info("torrent client", "authentication", "successful")
 }
 
 func (p *PreviewTorrentClient) Login() error {
@@ -20,9 +20,9 @@ func (p *PreviewTorrentClient) Login() error {
 
 func (p *PreviewTorrentClient) GetFinishedTorrents() ([]Torrent, error) {
 	return []Torrent{
-		{Hash: "abc123", Name: "Preview.Torrent.1", TotalSizeInBytes: 1024 * 1024 * 100, SecondsSinceDownload: 86400 * 30},
-		{Hash: "def456", Name: "Preview.Torrent.2", TotalSizeInBytes: 1024 * 1024 * 500, SecondsSinceDownload: 86400 * 15},
-		{Hash: "ghi789", Name: "Preview.Torrent.3", TotalSizeInBytes: 1024 * 1024 * 1024 * 2, SecondsSinceDownload: 86400 * 7},
+		{Hash: "abc123", Name: "Torrent.1", TotalSizeInBytes: 1024 * 1024 * 100, SecondsSinceDownload: 86400 * 30},
+		{Hash: "def456", Name: "Torrent.2", TotalSizeInBytes: 1024 * 1024 * 500, SecondsSinceDownload: 86400 * 15},
+		{Hash: "ghi789", Name: "Torrent.3", TotalSizeInBytes: 1024 * 1024 * 1024 * 2, SecondsSinceDownload: 86400 * 7},
 	}, nil
 }
 

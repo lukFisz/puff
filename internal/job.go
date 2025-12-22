@@ -61,6 +61,10 @@ func scheduleJob(
 	appCfg AppConfig,
 	opts ...gocron.JobOption,
 ) gocron.Job {
+	if appCfg.Preview {
+		time.Sleep(2 * time.Second)
+	}
+
 	cronjob, err := scheduler.NewJob(
 		jobDef,
 		gocron.NewTask(job),
