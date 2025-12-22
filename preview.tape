@@ -62,7 +62,7 @@ Set FontSize 17
 Set Width 1350
 Set Height 800
 
-Type@80ms `puff` Enter
-Sleep 1s
+Type@100ms `puff` Enter
+Sleep 3s
 Wait+Screen@15s /running job/
 Sleep 10s
