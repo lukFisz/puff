@@ -26,8 +26,6 @@ func main() {
 
 	initLogger(config)
 
-	log.Fatal().Msg("dasdasd")
-
 	initMessage(config)
 	logConfig(config)
 
