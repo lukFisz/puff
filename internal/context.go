@@ -25,7 +25,7 @@ func NewAppContext(cfg AppConfig) *AppContext {
 
 	job := make([]TorrentClientJob, 0)
 	if cfg.Preview {
-		job = append(job, TorrentClientJob{TorrentType: "preview", TorrentClient: NewDelugeClient(cfg)})
+		job = append(job, TorrentClientJob{TorrentType: "preview", TorrentClient: NewPreviewTorrentClient()})
 	} else {
 		if cfg.DelugeUrl != "" {
 			job = append(job, TorrentClientJob{TorrentType: "deluge", TorrentClient: NewDelugeClient(cfg)})
