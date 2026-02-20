@@ -2,7 +2,8 @@ FROM ghcr.io/lukfisz/puff-builder AS builder
 
 FROM ghcr.io/charmbracelet/vhs:v0.10.0
 
-COPY --from=builder /app/puff-linux-amd64 /usr/bin/puff
+ARG TARGETARCH
+COPY --from=builder /app/puff-linux-$TARGETARCH /usr/bin/puff
 
 COPY preview.tape .
 
