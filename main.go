@@ -59,7 +59,7 @@ func initLogger(config puff.AppConfig) {
 func delayAppStart(config puff.AppConfig) {
 	startDelayDuration := config.StartDelayDuration()
 	if startDelayDuration.Seconds() > 0 {
-		log.Info().Dur("duration", startDelayDuration).Msg("start delay")
+		log.Info().Str("duration", config.StartDelay).Msg("start delay")
 		time.Sleep(startDelayDuration)
 	}
 }
