@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"regexp"
 
-	"github.com/charmbracelet/log"
-	"github.com/charmbracelet/x/ansi"
+	"github.com/rs/zerolog"
 )
 
 type DiscordClient struct {
@@ -56,21 +54,37 @@ func (dc *DiscordClient) sendMessage(message string, color uint) error {
 func (dc *DiscordClient) SendInfo(message string) {
 	err := dc.sendMessage(message, 3447003)
 	if err != nil {
-		log.New(os.Stdout).Error("discord client failed", "err", err)
+		logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+		logger.Error().Err(err).Msg("discord client failed")
 	}
 }
 
 func (dc *DiscordClient) SendError(message string) {
 	err := dc.sendMessage(message, 16711680)
 	if err != nil {
-		log.New(os.Stdout).Error("discord client failed", "err", err)
+		logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+		logger.Error().Err(err).Msg("discord client failed")
 	}
 }
 
+type logEvent struct {
+	Level string `json:"level"`
+}
+
 func (dc *DiscordClient) Write(p []byte) (n int, err error) {
-	if regexp.MustCompile(`(?i)(ERRO|FATA)`).Match(p) {
-		cleaned := ansi.Strip(string(p))
-		dc.SendError(cleaned)
+	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).With().Timestamp().Logger()
+	var logEvent logEvent
+	if err := json.Unmarshal(p, &logEvent); err != nil {
+		logger.Error().Err(err).Msg("cannot unmarshal log event")
+		return len(p), err
+	}
+	level, err := zerolog.ParseLevel(logEvent.Level)
+	if err != nil {
+		logger.Error().Err(err).Msg("cannot parse log level")
+		return len(p), err
+	}
+	if level == zerolog.ErrorLevel || level == zerolog.FatalLevel || level == zerolog.PanicLevel {
+		dc.SendError(string(p))
 	}
 	return len(p), nil
 }

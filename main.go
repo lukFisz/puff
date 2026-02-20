@@ -6,11 +6,12 @@ import (
 	"os"
 	"os/signal"
 	puff "puff/internal"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/log"
-	"github.com/muesli/termenv"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const appBanner string = ` ____  _  _  ____  ____
@@ -24,6 +25,8 @@ func main() {
 	config.ParseValidation()
 
 	initLogger(config)
+
+	log.Fatal().Msg("dasdasd")
 
 	initMessage(config)
 	logConfig(config)
@@ -39,66 +42,59 @@ func main() {
 }
 
 func initMessage(config puff.AppConfig) {
-	logger := log.New(os.Stdout)
-	logger.SetReportTimestamp(false)
-	logger.SetReportCaller(false)
-	logger.Print(fmt.Sprintf(appBanner, config.Version))
-	log.Print("started")
+	fmt.Println(fmt.Sprintf(appBanner, config.Version))
+	log.Info().Msg("started")
 }
 
 func initLogger(config puff.AppConfig) {
-	multi := io.MultiWriter(os.Stdout, puff.NewDiscordClient(config))
-	log.SetOutput(multi)
-	log.SetColorProfile(termenv.TrueColor)
-	level, err := log.ParseLevel(config.LogLevel)
+	zerolog.TimeFieldFormat = time.RFC3339
+	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	multi := io.MultiWriter(consoleWriter, puff.NewDiscordClient(config))
+	level, err := zerolog.ParseLevel(strings.ToLower(config.LogLevel))
 	if err != nil {
-		log.Fatal("log level", "err", err)
+		log.Fatal().Err(err).Msg("log level")
 	}
-	log.SetLevel(level)
+	zerolog.SetGlobalLevel(level)
+	log.Logger = zerolog.New(multi).With().Timestamp().Logger()
 }
 
 func delayAppStart(config puff.AppConfig) {
 	startDelayDuration := config.StartDelayDuration()
 	if startDelayDuration.Seconds() > 0 {
-		log.Info("start delay", "duration", startDelayDuration)
+		log.Info().Dur("duration", startDelayDuration).Msg("start delay")
 		time.Sleep(startDelayDuration)
 	}
 }
 
 func logConfig(config puff.AppConfig) {
-	var diskThreshold string
-	if config.DiskFreeSpaceThreshold == nil {
-		diskThreshold = "DISK_FREE_SPACE_TRESHOLD: NONE"
-	} else {
-		diskThreshold = fmt.Sprintf("DISK_FREE_SPACE_TRESHOLD: %s\n  DISK_PATH: %s", *config.DiskFreeSpaceThreshold, config.DiskPath)
+	event := log.Info().
+		Str("CRON_SCHEDULE", config.Cron).
+		Str("TORRENT_CLIENT_TIMEOUT", config.TorrentClientTimeout).
+		Str("RETENTION", config.Retention).
+		Str("START_DELAY", config.StartDelay).
+		Bool("DRY_RUN", config.DryRun).
+		Str("LOG_LEVEL", config.LogLevel).
+		Str("DISCORD_WEBHOOK_URL", "****").
+		Bool("RUN_ONCE", config.RunOnce).
+		Str("TZ", config.TimeZone)
+
+	if config.DelugeUrl != "" {
+		event = event.Str("DELUGE_URL", config.DelugeUrl)
 	}
-	strConfig := fmt.Sprintf(`  CRON_SCHEDULE: %s
-  DELUGE_URL: %s
-  QBITTORRENT_URL: %s
-  QBITTORRENT_USERNAME: %s
-  DELUGE_CLIENT_TIMEOUT: %s
-  RETENTION: %s
-  START_DELAY: %s
-  DRY_RUN: %t
-  LOG_LEVEL: %s
-  DISCORD_WEBHOOK_URL: ****
-  RUN_ONCE: %t
-  %s
-  TZ: %s`,
-		config.Cron,
-		config.DelugeUrl,
-		config.QbitTorrentUrl,
-		config.QbitTorrentUsername,
-		config.TorrentClientTimeout,
-		config.Retention,
-		config.StartDelay,
-		config.DryRun,
-		config.LogLevel,
-		config.RunOnce,
-		diskThreshold,
-		config.TimeZone,
-	)
-	log.Info("init", "app config", strConfig)
+
+	if config.QbitTorrentUrl != "" {
+		event = event.
+			Str("QBITTORRENT_URL", config.QbitTorrentUrl).
+			Str("QBITTORRENT_USERNAME", config.QbitTorrentUsername)
+	}
+
+	if config.DiskFreeSpaceThreshold != nil {
+		event = event.
+			Str("DISK_FREE_SPACE_THRESHOLD", *config.DiskFreeSpaceThreshold).
+			Str("DISK_PATH", config.DiskPath)
+	}
+
+	event.Msg("init config")
 }
 
 func orchestrateExecution(executeLogic func() *puff.AppContext, cleanUp func(*puff.AppContext)) {
@@ -129,7 +125,7 @@ func runApp(ctx *puff.AppContext) *puff.AppContext {
 func gracefulShutdown(ctx *puff.AppContext) {
 	err := (*ctx.Scheduler).Shutdown()
 	if err != nil {
-		log.Fatal("scheduler", "err", err)
+		log.Fatal().Err(err).Msg("scheduler")
 	}
-	log.Print("shut down")
+	log.Info().Msg("shut down")
 }

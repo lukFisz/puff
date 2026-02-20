@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"github.com/rs/zerolog/log"
 	"resty.dev/v3"
 )
 
@@ -49,7 +49,7 @@ type QbitTorrentClient struct {
 func NewQbitTorrentClient(cfg AppConfig) *QbitTorrentClient {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("qbittorrent init")
 	}
 	return &QbitTorrentClient{
 		BaseURL:  cfg.QbitTorrentUrl,
@@ -64,11 +64,19 @@ func NewQbitTorrentClient(cfg AppConfig) *QbitTorrentClient {
 func (q *QbitTorrentClient) CheckConnection() {
 	resp, err := q.Client.R().Post("api/v2/auth/login")
 	if err != nil {
-		log.Error("failed to connect to qbittorrent", "err", err, "url", q.BaseURL)
+		log.Error().Err(err).Str("url", q.BaseURL).Msg("failed to connect to qbittorrent")
 	}
-	if resp.String() != "Fails." {
-		log.Error("failed to connect to qbittorrent", "status", resp.Status(), "url", q.BaseURL)
+	if resp.StatusCode() == 200 || resp.String() == "Fails." {
+		log.Info().
+			Str("url", q.BaseURL).
+			Msg("successfully connected to qbittorrent")
+		return
 	}
+	log.Error().
+		Str("response", resp.String()).
+		Str("status", resp.Status()).
+		Str("url", q.BaseURL).
+		Msg("failed to connect to qbittorrent")
 }
 
 func (q *QbitTorrentClient) Login() error {
@@ -84,7 +92,7 @@ func (q *QbitTorrentClient) Login() error {
 	}
 
 	if resp.StatusCode() == http.StatusOK && resp.String() == "Ok." {
-		log.Info("successfully logged in to qbittorrent", "url", q.BaseURL)
+		log.Info().Str("url", q.BaseURL).Msg("successfully logged in to qbittorrent")
 		return nil
 	}
 
@@ -127,11 +135,11 @@ func (q *QbitTorrentClient) GetFinishedTorrents() ([]Torrent, error) {
 
 func (q *QbitTorrentClient) RemoveTorrentsWithData(torrents []Torrent, dryRun bool) error {
 	if dryRun {
-		log.Info("dry-run mode enabled, not deleting any torrents")
+		log.Info().Msg("dry-run mode enabled, not deleting any torrents")
 		return nil
 	}
 	if len(torrents) == 0 {
-		log.Warn("no torrents to remove")
+		log.Warn().Msg("no torrents to remove")
 		return nil
 	}
 

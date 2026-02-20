@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/charmbracelet/log"
+	"github.com/rs/zerolog/log"
 )
 
 type PreviewTorrentClient struct{}
@@ -11,7 +11,7 @@ func NewPreviewTorrentClient() *PreviewTorrentClient {
 }
 
 func (p *PreviewTorrentClient) CheckConnection() {
-	log.Info("torrent client", "authentication", "successful")
+	log.Info().Str("authentication", "successful").Msg("torrent client")
 }
 
 func (p *PreviewTorrentClient) Login() error {

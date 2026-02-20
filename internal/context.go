@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"github.com/charmbracelet/log"
 	"github.com/go-co-op/gocron/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type TorrentClientJob struct {
@@ -20,7 +20,7 @@ type AppContext struct {
 
 func NewAppContext(cfg AppConfig) *AppContext {
 	if cfg.Cron == "" {
-		log.Fatal("CRON SCHEDULE cannot be empty")
+		log.Fatal().Msg("CRON SCHEDULE cannot be empty")
 	}
 
 	job := make([]TorrentClientJob, 0)
@@ -29,11 +29,11 @@ func NewAppContext(cfg AppConfig) *AppContext {
 	} else {
 		if cfg.DelugeUrl != "" {
 			job = append(job, TorrentClientJob{TorrentType: "deluge", TorrentClient: NewDelugeClient(cfg)})
-			log.Info("Deluge client enabled")
+			log.Info().Msg("Deluge client enabled")
 		}
 		if cfg.QbitTorrentUrl != "" {
 			job = append(job, TorrentClientJob{TorrentType: "qbittorrent", TorrentClient: NewQbitTorrentClient(cfg)})
-			log.Info("Qbittorrent client enabled")
+			log.Info().Msg("Qbittorrent client enabled")
 		}
 	}
 

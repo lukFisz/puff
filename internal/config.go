@@ -3,10 +3,10 @@ package internal
 import (
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/dustin/go-humanize"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/rickb777/date/period"
+	"github.com/rs/zerolog/log"
 )
 
 type AppConfig struct {
@@ -34,7 +34,7 @@ func GetConfig() AppConfig {
 	var config AppConfig
 	err := envconfig.Process("", &config)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("config error")
 	}
 	return config
 }
@@ -48,7 +48,7 @@ func (config AppConfig) ParseValidation() {
 	if config.DiskFreeSpaceThreshold != nil {
 		_, err := config.FreeSpaceOfDiskPathInBytes()
 		if err != nil {
-			log.Fatal("DISK_PATH validation", "err", err)
+			log.Fatal().Err(err).Msg("DISK_PATH validation")
 		}
 	}
 }
@@ -56,7 +56,7 @@ func (config AppConfig) ParseValidation() {
 func (config AppConfig) Location() *time.Location {
 	location, err := time.LoadLocation(config.TimeZone)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("timezone error")
 	}
 	return location
 }
@@ -64,7 +64,7 @@ func (config AppConfig) Location() *time.Location {
 func (config AppConfig) RetentionInSeconds() int {
 	period, err := period.Parse(config.Retention)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("retention parse error")
 	}
 	dur := period.DurationApprox()
 	return int(dur.Seconds())
@@ -73,7 +73,7 @@ func (config AppConfig) RetentionInSeconds() int {
 func (config AppConfig) StartDelayDuration() time.Duration {
 	duration, err := time.ParseDuration(config.StartDelay)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("start delay parse error")
 	}
 	return duration
 }
@@ -81,7 +81,7 @@ func (config AppConfig) StartDelayDuration() time.Duration {
 func (config AppConfig) TorrentClientTimeoutDuration() time.Duration {
 	duration, err := time.ParseDuration(config.TorrentClientTimeout)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("torrent client timeout parse error")
 	}
 	return duration
 }
@@ -92,7 +92,7 @@ func (config AppConfig) DiskFreeSpaceThresholdInBytes() *uint64 {
 	}
 	size, err := humanize.ParseBytes(*config.DiskFreeSpaceThreshold)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("disk free space threshold parse error")
 	}
 	return &size
 }

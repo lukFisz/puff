@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/charmbracelet/log"
+	"github.com/rs/zerolog/log"
 )
 
 type DelugeClient struct {
@@ -63,9 +63,9 @@ func NewDelugeClient(cfg AppConfig) *DelugeClient {
 
 func (delugeClient *DelugeClient) CheckConnection() {
 	if err := delugeClient.Login(); err != nil {
-		log.Error("deluge client", "err", err)
+		log.Error().Err(err).Msg("deluge client")
 	} else {
-		log.Info("deluge client", "authentication", "successful")
+		log.Info().Str("authentication", "successful").Msg("deluge client")
 	}
 }
 
@@ -204,7 +204,7 @@ func (delugeClient *DelugeClient) GetFinishedTorrents() ([]Torrent, error) {
 
 func (delugeClient *DelugeClient) RemoveTorrentsWithData(torrents []Torrent, dryRun bool) error {
 	if dryRun {
-		log.Print("remove torrents with dry-run")
+		log.Log().Msg("remove torrents with dry-run")
 		return nil
 	}
 	hashes := make([]string, 0, len(torrents))

@@ -2,7 +2,6 @@ package internal
 
 import (
 	"bytes"
-	"regexp"
 	"testing"
 )
 
@@ -56,40 +55,39 @@ func TestDiscordClient_Write(t *testing.T) {
 		shouldMatch bool
 	}{
 		{
-			name:        "ERROR log",
-			input:       []byte("2025/12/17 ERROR something went wrong"),
+			name:        "error level log",
+			input:       []byte(`{"level":"error","message":"something went wrong"}`),
 			shouldMatch: true,
 		},
 		{
-			name:        "FATAL log",
-			input:       []byte("2025/12/17 FATAL critical failure"),
+			name:        "fatal level log",
+			input:       []byte(`{"level":"fatal","message":"critical failure"}`),
 			shouldMatch: true,
 		},
 		{
-			name:        "INFO log",
-			input:       []byte("2025/12/17 INFO everything is fine"),
+			name:        "panic level log",
+			input:       []byte(`{"level":"panic","message":"panic"}`),
+			shouldMatch: true,
+		},
+		{
+			name:        "info level log",
+			input:       []byte(`{"level":"info","message":"everything is fine"}`),
 			shouldMatch: false,
 		},
 		{
-			name:        "DEBUG log",
-			input:       []byte("2025/12/17 DEBUG detailed info"),
+			name:        "debug level log",
+			input:       []byte(`{"level":"debug","message":"detailed info"}`),
 			shouldMatch: false,
 		},
 		{
-			name:        "lowercase error",
-			input:       []byte("2025/12/17 error something wrong"),
-			shouldMatch: true,
-		},
-		{
-			name:        "lowercase fatal",
-			input:       []byte("2025/12/17 fatal critical"),
-			shouldMatch: true,
+			name:        "warn level log",
+			input:       []byte(`{"level":"warn","message":"warning"}`),
+			shouldMatch: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create client without webhook (won't actually send)
 			client := NewDiscordClient(AppConfig{DiscordWebhookUrl: ""})
 
 			n, err := client.Write(tt.input)
@@ -101,13 +99,17 @@ func TestDiscordClient_Write(t *testing.T) {
 			if n != len(tt.input) {
 				t.Errorf("Write() returned %v bytes, want %v", n, len(tt.input))
 			}
-
-			// Verify regex matching logic
-			matched := regexp.MustCompile(`(?i)(ERRO|FATA)`).Match(tt.input)
-			if matched != tt.shouldMatch {
-				t.Errorf("Regex match = %v, want %v for input: %s", matched, tt.shouldMatch, tt.input)
-			}
 		})
+	}
+}
+
+func TestDiscordClient_WriteInvalidJSON(t *testing.T) {
+	client := NewDiscordClient(AppConfig{DiscordWebhookUrl: ""})
+
+	_, err := client.Write([]byte("not json"))
+
+	if err == nil {
+		t.Error("Write() expected error for invalid JSON, got nil")
 	}
 }
 
@@ -165,8 +167,6 @@ func TestFormatTorrentsToPrint(t *testing.T) {
 }
 
 func TestSendInfoAboutTorrentsToDiscord(t *testing.T) {
-	// This test verifies the function doesn't panic
-	// Actual sending is skipped when webhookUrl is nil
 	client := NewDiscordClient(AppConfig{DiscordWebhookUrl: ""})
 
 	torrents := []Torrent{
@@ -186,22 +186,18 @@ func TestSendInfoAboutTorrentsToDiscord(t *testing.T) {
 }
 
 func TestDiscordClient_SendInfo(t *testing.T) {
-	// Test that SendInfo doesn't panic when webhook is not configured
 	client := NewDiscordClient(AppConfig{DiscordWebhookUrl: ""})
 	client.SendInfo("Test message")
-	// If we got here without panic, test passed
 }
 
 func TestDiscordClient_SendError(t *testing.T) {
-	// Test that SendError doesn't panic when webhook is not configured
 	client := NewDiscordClient(AppConfig{DiscordWebhookUrl: ""})
 	client.SendError("Test error message")
-	// If we got here without panic, test passed
 }
 
 func BenchmarkDiscordClient_Write(b *testing.B) {
 	client := NewDiscordClient(AppConfig{DiscordWebhookUrl: ""})
-	data := []byte("2025/12/17 ERROR benchmark test")
+	data := []byte(`{"level":"error","message":"benchmark test"}`)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -229,11 +225,9 @@ func BenchmarkFormatTorrentsToPrint(b *testing.B) {
 func TestDiscordClientWriteImplementsIOWriter(t *testing.T) {
 	client := NewDiscordClient(AppConfig{DiscordWebhookUrl: ""})
 
-	// Test that DiscordClient can be used as io.Writer
 	var buf bytes.Buffer
-	testData := []byte("test data")
+	testData := []byte(`{"level":"info","message":"test"}`)
 
-	// Write to both buffer and discord client
 	n1, err1 := buf.Write(testData)
 	n2, err2 := client.Write(testData)
 

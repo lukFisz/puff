@@ -4,9 +4,9 @@ import (
 	"slices"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 const runOnceTag = "run-once-job"
@@ -18,7 +18,7 @@ func NewScheduler(config AppConfig) gocron.Scheduler {
 		gocron.WithStopTimeout(time.Minute),
 	)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("scheduler init")
 	}
 	scheduler.Start()
 	return scheduler
@@ -75,13 +75,13 @@ func scheduleJob(
 		)...,
 	)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("schedule job")
 	}
 
 	if appCfg.Preview {
-		log.Info("scheduled", "job", jobName, "next run", time.Now().In(appCfg.Location()))
+		log.Info().Str("job", jobName).Time("next run", time.Now().In(appCfg.Location())).Msg("scheduled")
 	} else {
-		log.Info("scheduled", "job", jobName, "next run", getNextRun(cronjob))
+		log.Info().Str("job", jobName).Time("next run", getNextRun(cronjob)).Msg("scheduled")
 	}
 
 	return cronjob
@@ -89,7 +89,7 @@ func scheduleJob(
 
 func beforeJob() gocron.EventListener {
 	return gocron.BeforeJobRuns(func(jobID uuid.UUID, jobName string) {
-		log.Info("running", "job", jobName)
+		log.Info().Str("job", jobName).Msg("running")
 	})
 }
 
@@ -98,22 +98,22 @@ func afterJob(ctx *AppContext) gocron.EventListener {
 		for _, j := range (*ctx.Scheduler).Jobs() {
 			if j.ID() == jobID {
 				if slices.Contains(j.Tags(), runOnceTag) {
-					log.Info("finished", "job", jobName)
+					log.Info().Str("job", jobName).Msg("finished")
 					*ctx.ShutdownChan <- true
 					return
 				}
-				log.Info("finished", "job", jobName, "next run", getNextRun(j))
+				log.Info().Str("job", jobName).Time("next run", getNextRun(j)).Msg("finished")
 				return
 			}
 		}
-		log.Info("finished", "job", jobName)
+		log.Info().Str("job", jobName).Msg("finished")
 	})
 }
 
 func getNextRun(job gocron.Job) time.Time {
 	nextRun, err := job.NextRun()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("get next run")
 	}
 	return nextRun
 }

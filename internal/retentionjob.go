@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/log"
 	"github.com/dustin/go-humanize"
+	"github.com/rs/zerolog/log"
 )
 
 func RemoveExpiredTorrents(ctx *AppContext, torrentClient TorrentClient) {
@@ -13,21 +13,21 @@ func RemoveExpiredTorrents(ctx *AppContext, torrentClient TorrentClient) {
 		usageThreshold := ctx.AppConfig.DiskFreeSpaceThresholdInBytes()
 		freeSpaceOfDisk, err := ctx.AppConfig.FreeSpaceOfDiskPathInBytes()
 		if err != nil {
-			log.Error("cannot check disk stats", "err", err)
+			log.Error().Err(err).Msg("cannot check disk stats")
 			return
 		}
 		diskFreeSpaceHumanFormat := humanize.Bytes(*freeSpaceOfDisk)
 		thresholdHumanFormat := humanize.Bytes(*usageThreshold)
 		if *freeSpaceOfDisk > *usageThreshold {
-			log.Info("skipping retention, threshold not excedded", "free space", diskFreeSpaceHumanFormat, "threshold", thresholdHumanFormat)
+			log.Info().Str("free space", diskFreeSpaceHumanFormat).Str("threshold", thresholdHumanFormat).Msg("skipping retention, threshold not excedded")
 			return
 		}
 		exceededByHumanFormat := humanize.Bytes(*usageThreshold - *freeSpaceOfDisk)
-		log.Info("threshold excedded", "threshold", thresholdHumanFormat, "free space", diskFreeSpaceHumanFormat, "exceeded by", exceededByHumanFormat)
+		log.Info().Str("threshold", thresholdHumanFormat).Str("free space", diskFreeSpaceHumanFormat).Str("exceeded by", exceededByHumanFormat).Msg("threshold excedded")
 	}
 	finishedTorrents, err := torrentClient.GetFinishedTorrents()
 	if err != nil {
-		log.Error("cannot get list of finished torrents", "err", err)
+		log.Error().Err(err).Msg("cannot get list of finished torrents")
 		return
 	}
 	torrentsToRemove := make([]Torrent, 0)
@@ -37,12 +37,12 @@ func RemoveExpiredTorrents(ctx *AppContext, torrentClient TorrentClient) {
 		}
 	}
 	if len(torrentsToRemove) == 0 {
-		log.Info("no expired torrents to remove")
+		log.Info().Msg("no expired torrents to remove")
 		return
 	}
 	err = torrentClient.RemoveTorrentsWithData(torrentsToRemove, ctx.AppConfig.DryRun)
 	if err != nil {
-		log.Error("remove torrents failed", "err", err)
+		log.Error().Err(err).Msg("remove torrents failed")
 		return
 	}
 
@@ -52,11 +52,10 @@ func RemoveExpiredTorrents(ctx *AppContext, torrentClient TorrentClient) {
 	}
 
 	formattedTorrents := formatTorrentsToPrint(torrentsToRemove)
-	log.Info(
-		"remove expired torrents",
-		"total released space", FormattedBytes(totalBytes),
-		"removed torrents", formattedTorrents,
-	)
+	log.Info().
+		Str("total released space", FormattedBytes(totalBytes)).
+		Str("removed torrents", formattedTorrents).
+		Msg("remove expired torrents")
 	sendInfoAboutTorrentsToDiscord(ctx.DiscordClient, torrentsToRemove, totalBytes, formattedTorrents)
 }
 
