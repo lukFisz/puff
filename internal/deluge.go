@@ -9,26 +9,12 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-type TorrentClient interface {
-	CheckConnection()
-	Login() error
-	GetFinishedTorrents() ([]Torrent, error)
-	RemoveTorrentsWithData(torrents []Torrent, dryRun bool) error
-}
-
 type DelugeClient struct {
 	BaseURL  string
 	Password string
 	Session  string
 	Client   *http.Client
 	idCount  int
-}
-
-type Torrent struct {
-	Hash                 string `json:"hash"`
-	TotalSizeInBytes     int64  `json:"total_size"`
-	Name                 string `json:"name"`
-	SecondsSinceDownload int    `json:"time_since_download"`
 }
 
 type jsonRpcRequest struct {
@@ -43,42 +29,34 @@ type jsonRpcResponse struct {
 	ID     int             `json:"id"`
 }
 
-func FormattedBytes(bytes int64) string {
-	const (
-		_          = iota
-		KB float64 = 1 << (10 * iota)
-		MB
-		GB
-		TB
-		PB
-		EB
-	)
+type TorrentDeluge struct {
+	Hash                 string `json:"hash"`
+	TotalSizeInBytes     int64  `json:"total_size"`
+	TorrentName          string `json:"name"`
+	SecondsSinceDownload int    `json:"time_since_download"`
+}
 
-	b := float64(bytes)
+func (t TorrentDeluge) Expired(maxSecToLiveInclusive int) bool {
+	return t.SecondsSinceDownload > maxSecToLiveInclusive
+}
 
-	switch {
-	case b >= EB:
-		return fmt.Sprintf("%.2f EB", b/EB)
-	case b >= PB:
-		return fmt.Sprintf("%.2f PB", b/PB)
-	case b >= TB:
-		return fmt.Sprintf("%.2f TB", b/TB)
-	case b >= GB:
-		return fmt.Sprintf("%.2f GB", b/GB)
-	case b >= MB:
-		return fmt.Sprintf("%.2f MB", b/MB)
-	case b >= KB:
-		return fmt.Sprintf("%.2f KB", b/KB)
-	default:
-		return fmt.Sprintf("%d B", bytes)
-	}
+func (t TorrentDeluge) Id() string {
+	return t.Hash
+}
+
+func (t TorrentDeluge) SizeInBytes() int64 {
+	return t.TotalSizeInBytes
+}
+
+func (t TorrentDeluge) Name() string {
+	return t.TorrentName
 }
 
 func NewDelugeClient(cfg AppConfig) *DelugeClient {
 	return &DelugeClient{
 		BaseURL:  cfg.DelugeUrl,
 		Password: cfg.DelugePassword,
-		Client:   &http.Client{Timeout: cfg.DelugeClientTimeoutDuration()},
+		Client:   &http.Client{Timeout: cfg.TorrentClientTimeoutDuration()},
 		idCount:  0,
 	}
 }
@@ -211,7 +189,7 @@ func (delugeClient *DelugeClient) GetFinishedTorrents() ([]Torrent, error) {
 		return nil, err
 	}
 
-	var torrentsMap map[string]Torrent
+	var torrentsMap map[string]TorrentDeluge
 	if err := json.Unmarshal(result, &torrentsMap); err != nil {
 		return nil, err
 	}
@@ -231,7 +209,7 @@ func (delugeClient *DelugeClient) RemoveTorrentsWithData(torrents []Torrent, dry
 	}
 	hashes := make([]string, 0, len(torrents))
 	for _, torrent := range torrents {
-		hashes = append(hashes, torrent.Hash)
+		hashes = append(hashes, torrent.Id())
 	}
 	_, err := delugeClient.request("core.remove_torrents", []interface{}{hashes, true}, true)
 	return err

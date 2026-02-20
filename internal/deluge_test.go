@@ -4,64 +4,11 @@ import (
 	"testing"
 )
 
-func TestFormattedBytes(t *testing.T) {
-	tests := []struct {
-		name  string
-		bytes int64
-		want  string
-	}{
-		{
-			name:  "bytes",
-			bytes: 500,
-			want:  "500 B",
-		},
-		{
-			name:  "kilobytes",
-			bytes: 5 * 1024,
-			want:  "5.00 KB",
-		},
-		{
-			name:  "megabytes",
-			bytes: 100 * 1024 * 1024,
-			want:  "100.00 MB",
-		},
-		{
-			name:  "gigabytes",
-			bytes: 50 * 1024 * 1024 * 1024,
-			want:  "50.00 GB",
-		},
-		{
-			name:  "terabytes",
-			bytes: 2 * 1024 * 1024 * 1024 * 1024,
-			want:  "2.00 TB",
-		},
-		{
-			name:  "zero bytes",
-			bytes: 0,
-			want:  "0 B",
-		},
-		{
-			name:  "fractional MB",
-			bytes: 150*1024*1024 + 512*1024,
-			want:  "150.50 MB",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := FormattedBytes(tt.bytes)
-			if got != tt.want {
-				t.Errorf("FormattedBytes(%d) = %v, want %v", tt.bytes, got, tt.want)
-			}
-		})
-	}
-}
-
 func TestNewDelugeClient(t *testing.T) {
 	cfg := AppConfig{
-		DelugeUrl:           "http://deluge.test/json",
-		DelugePassword:      "testpass",
-		DelugeClientTimeout: "30s",
+		DelugeUrl:            "http://deluge.test/json",
+		DelugePassword:       "testpass",
+		TorrentClientTimeout: "30s",
 	}
 
 	client := NewDelugeClient(cfg)
@@ -83,8 +30,75 @@ func TestNewDelugeClient(t *testing.T) {
 	}
 
 	timeout := client.Client.Timeout
-	expected := cfg.DelugeClientTimeoutDuration()
+	expected := cfg.TorrentClientTimeoutDuration()
 	if timeout != expected {
 		t.Errorf("Client.Timeout = %v, want %v", timeout, expected)
 	}
+}
+
+func TestTorrentDeluge_Expired(t *testing.T) {
+	tests := []struct {
+		name                 string
+		secondsSinceDownload int
+		maxSec               int
+		wantExpired          bool
+	}{
+		{
+			name:                 "expired torrent",
+			secondsSinceDownload: 15 * 24 * 60 * 60,
+			maxSec:               14 * 24 * 60 * 60,
+			wantExpired:          true,
+		},
+		{
+			name:                 "not expired torrent",
+			secondsSinceDownload: 5 * 24 * 60 * 60,
+			maxSec:               14 * 24 * 60 * 60,
+			wantExpired:          false,
+		},
+		{
+			name:                 "exactly at threshold",
+			secondsSinceDownload: 14 * 24 * 60 * 60,
+			maxSec:               14 * 24 * 60 * 60,
+			wantExpired:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			torrent := TorrentDeluge{
+				Hash:                 "abc123",
+				TorrentName:          "Test.Torrent",
+				TotalSizeInBytes:     100 * 1024 * 1024,
+				SecondsSinceDownload: tt.secondsSinceDownload,
+			}
+			got := torrent.Expired(tt.maxSec)
+			if got != tt.wantExpired {
+				t.Errorf("Expired(%d) = %v, want %v", tt.maxSec, got, tt.wantExpired)
+			}
+		})
+	}
+}
+
+func TestTorrentDeluge_InterfaceMethods(t *testing.T) {
+	torrent := TorrentDeluge{
+		Hash:                 "abc123",
+		TorrentName:          "Test.Torrent",
+		TotalSizeInBytes:     100 * 1024 * 1024,
+		SecondsSinceDownload: 60,
+	}
+
+	if torrent.Id() != "abc123" {
+		t.Errorf("Id() = %v, want %v", torrent.Id(), "abc123")
+	}
+
+	if torrent.Name() != "Test.Torrent" {
+		t.Errorf("Name() = %v, want %v", torrent.Name(), "Test.Torrent")
+	}
+
+	if torrent.SizeInBytes() != 100*1024*1024 {
+		t.Errorf("SizeInBytes() = %v, want %v", torrent.SizeInBytes(), 100*1024*1024)
+	}
+
+	// Verify TorrentDeluge implements Torrent interface
+	var _ Torrent = torrent
 }

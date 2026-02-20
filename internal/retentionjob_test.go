@@ -7,9 +7,9 @@ import (
 func TestRemoveExpiredTorrents_NoExpiredTorrents(t *testing.T) {
 	mockClient := NewMockTorrentClient()
 	mockClient.GetFinishedTorrentsResult = []Torrent{
-		{
+		TorrentDeluge{
 			Hash:                 "abc123",
-			Name:                 "Recent.Torrent",
+			TorrentName:          "Recent.Torrent",
 			TotalSizeInBytes:     100 * 1024 * 1024,
 			SecondsSinceDownload: 60, // 1 minute old
 		},
@@ -19,13 +19,12 @@ func TestRemoveExpiredTorrents_NoExpiredTorrents(t *testing.T) {
 		Retention:              "P14D", // 14 days
 		DelugeUrl:              "http://test",
 		DelugePassword:         "test",
-		DelugeClientTimeout:    "2m",
+		TorrentClientTimeout:   "2m",
 		DryRun:                 false,
 		DiscordWebhookUrl:      "",
 		DiskFreeSpaceThreshold: nil,
 	}
 
-	var client TorrentClient = mockClient
 	discordClient := NewDiscordClient(config)
 	scheduler := NewScheduler(config)
 	shutdownChan := make(chan bool)
@@ -33,12 +32,11 @@ func TestRemoveExpiredTorrents_NoExpiredTorrents(t *testing.T) {
 	ctx := &AppContext{
 		Scheduler:     &scheduler,
 		DiscordClient: discordClient,
-		TorrentClient: &client,
 		AppConfig:     &config,
 		ShutdownChan:  &shutdownChan,
 	}
 
-	RemoveExpiredTorrents(ctx)
+	RemoveExpiredTorrents(ctx, mockClient)
 
 	if !mockClient.GetFinishedTorrentsCalled {
 		t.Error("GetFinishedTorrents should have been called")
@@ -47,26 +45,29 @@ func TestRemoveExpiredTorrents_NoExpiredTorrents(t *testing.T) {
 	if mockClient.RemoveTorrentsWithDataCalled {
 		t.Error("RemoveTorrentsWithData should not have been called for non-expired torrents")
 	}
+
+	// Clean up scheduler
+	scheduler.Shutdown()
 }
 
 func TestRemoveExpiredTorrents_WithExpiredTorrents(t *testing.T) {
 	mockClient := NewMockTorrentClient()
 	mockClient.GetFinishedTorrentsResult = []Torrent{
-		{
+		TorrentDeluge{
 			Hash:                 "abc123",
-			Name:                 "Old.Torrent",
+			TorrentName:          "Old.Torrent",
 			TotalSizeInBytes:     100 * 1024 * 1024,
 			SecondsSinceDownload: 15 * 24 * 60 * 60, // 15 days old
 		},
-		{
+		TorrentDeluge{
 			Hash:                 "def456",
-			Name:                 "Very.Old.Torrent",
+			TorrentName:          "Very.Old.Torrent",
 			TotalSizeInBytes:     500 * 1024 * 1024,
 			SecondsSinceDownload: 30 * 24 * 60 * 60, // 30 days old
 		},
-		{
+		TorrentDeluge{
 			Hash:                 "ghi789",
-			Name:                 "Recent.Torrent",
+			TorrentName:          "Recent.Torrent",
 			TotalSizeInBytes:     200 * 1024 * 1024,
 			SecondsSinceDownload: 5 * 24 * 60 * 60, // 5 days old
 		},
@@ -76,13 +77,12 @@ func TestRemoveExpiredTorrents_WithExpiredTorrents(t *testing.T) {
 		Retention:              "P14D", // 14 days
 		DelugeUrl:              "http://test",
 		DelugePassword:         "test",
-		DelugeClientTimeout:    "2m",
+		TorrentClientTimeout:   "2m",
 		DryRun:                 false,
 		DiscordWebhookUrl:      "",
 		DiskFreeSpaceThreshold: nil,
 	}
 
-	var client TorrentClient = mockClient
 	discordClient := NewDiscordClient(config)
 	scheduler := NewScheduler(config)
 	shutdownChan := make(chan bool)
@@ -90,12 +90,11 @@ func TestRemoveExpiredTorrents_WithExpiredTorrents(t *testing.T) {
 	ctx := &AppContext{
 		Scheduler:     &scheduler,
 		DiscordClient: discordClient,
-		TorrentClient: &client,
 		AppConfig:     &config,
 		ShutdownChan:  &shutdownChan,
 	}
 
-	RemoveExpiredTorrents(ctx)
+	RemoveExpiredTorrents(ctx, mockClient)
 
 	if !mockClient.GetFinishedTorrentsCalled {
 		t.Error("GetFinishedTorrents should have been called")
@@ -112,18 +111,58 @@ func TestRemoveExpiredTorrents_WithExpiredTorrents(t *testing.T) {
 	// Verify the correct torrents were selected for removal
 	expectedNames := map[string]bool{"Old.Torrent": true, "Very.Old.Torrent": true}
 	for _, torrent := range mockClient.RemoveTorrentsWithDataInput {
-		if !expectedNames[torrent.Name] {
-			t.Errorf("Unexpected torrent marked for removal: %s", torrent.Name)
+		if !expectedNames[torrent.Name()] {
+			t.Errorf("Unexpected torrent marked for removal: %s", torrent.Name())
 		}
 	}
+
+	scheduler.Shutdown()
+}
+
+func TestRemoveExpiredTorrents_EmptyTorrentList(t *testing.T) {
+	mockClient := NewMockTorrentClient()
+	mockClient.GetFinishedTorrentsResult = []Torrent{}
+
+	config := AppConfig{
+		Retention:              "P14D",
+		DelugeUrl:              "http://test",
+		DelugePassword:         "test",
+		TorrentClientTimeout:   "2m",
+		DryRun:                 false,
+		DiscordWebhookUrl:      "",
+		DiskFreeSpaceThreshold: nil,
+	}
+
+	discordClient := NewDiscordClient(config)
+	scheduler := NewScheduler(config)
+	shutdownChan := make(chan bool)
+
+	ctx := &AppContext{
+		Scheduler:     &scheduler,
+		DiscordClient: discordClient,
+		AppConfig:     &config,
+		ShutdownChan:  &shutdownChan,
+	}
+
+	RemoveExpiredTorrents(ctx, mockClient)
+
+	if !mockClient.GetFinishedTorrentsCalled {
+		t.Error("GetFinishedTorrents should have been called")
+	}
+
+	if mockClient.RemoveTorrentsWithDataCalled {
+		t.Error("RemoveTorrentsWithData should not have been called for empty torrent list")
+	}
+
+	scheduler.Shutdown()
 }
 
 func TestRemoveExpiredTorrents_DryRunMode(t *testing.T) {
 	mockClient := NewMockTorrentClient()
 	mockClient.GetFinishedTorrentsResult = []Torrent{
-		{
+		TorrentDeluge{
 			Hash:                 "abc123",
-			Name:                 "Old.Torrent",
+			TorrentName:          "Old.Torrent",
 			TotalSizeInBytes:     100 * 1024 * 1024,
 			SecondsSinceDownload: 20 * 24 * 60 * 60, // 20 days old
 		},
@@ -133,13 +172,12 @@ func TestRemoveExpiredTorrents_DryRunMode(t *testing.T) {
 		Retention:              "P14D",
 		DelugeUrl:              "http://test",
 		DelugePassword:         "test",
-		DelugeClientTimeout:    "2m",
+		TorrentClientTimeout:   "2m",
 		DryRun:                 true, // DRY RUN MODE
 		DiscordWebhookUrl:      "",
 		DiskFreeSpaceThreshold: nil,
 	}
 
-	var client TorrentClient = mockClient
 	discordClient := NewDiscordClient(config)
 	scheduler := NewScheduler(config)
 	shutdownChan := make(chan bool)
@@ -147,12 +185,11 @@ func TestRemoveExpiredTorrents_DryRunMode(t *testing.T) {
 	ctx := &AppContext{
 		Scheduler:     &scheduler,
 		DiscordClient: discordClient,
-		TorrentClient: &client,
 		AppConfig:     &config,
 		ShutdownChan:  &shutdownChan,
 	}
 
-	RemoveExpiredTorrents(ctx)
+	RemoveExpiredTorrents(ctx, mockClient)
 
 	if !mockClient.RemoveTorrentsWithDataCalled {
 		t.Error("RemoveTorrentsWithData should have been called even in dry run")
@@ -161,6 +198,8 @@ func TestRemoveExpiredTorrents_DryRunMode(t *testing.T) {
 	if !mockClient.RemoveTorrentsWithDataDryRun {
 		t.Error("DryRun flag should have been passed as true")
 	}
+
+	scheduler.Shutdown()
 }
 
 func TestRemoveExpiredTorrents_GetTorrentsError(t *testing.T) {
@@ -171,13 +210,12 @@ func TestRemoveExpiredTorrents_GetTorrentsError(t *testing.T) {
 		Retention:              "P14D",
 		DelugeUrl:              "http://test",
 		DelugePassword:         "test",
-		DelugeClientTimeout:    "2m",
+		TorrentClientTimeout:   "2m",
 		DryRun:                 false,
 		DiscordWebhookUrl:      "",
 		DiskFreeSpaceThreshold: nil,
 	}
 
-	var client TorrentClient = mockClient
 	discordClient := NewDiscordClient(config)
 	scheduler := NewScheduler(config)
 	shutdownChan := make(chan bool)
@@ -185,25 +223,26 @@ func TestRemoveExpiredTorrents_GetTorrentsError(t *testing.T) {
 	ctx := &AppContext{
 		Scheduler:     &scheduler,
 		DiscordClient: discordClient,
-		TorrentClient: &client,
 		AppConfig:     &config,
 		ShutdownChan:  &shutdownChan,
 	}
 
 	// Should not panic, just log error and return
-	RemoveExpiredTorrents(ctx)
+	RemoveExpiredTorrents(ctx, mockClient)
 
 	if mockClient.RemoveTorrentsWithDataCalled {
 		t.Error("RemoveTorrentsWithData should not be called when GetFinishedTorrents fails")
 	}
+
+	scheduler.Shutdown()
 }
 
 func TestRemoveExpiredTorrents_RemovalError(t *testing.T) {
 	mockClient := NewMockTorrentClient()
 	mockClient.GetFinishedTorrentsResult = []Torrent{
-		{
+		TorrentDeluge{
 			Hash:                 "abc123",
-			Name:                 "Old.Torrent",
+			TorrentName:          "Old.Torrent",
 			TotalSizeInBytes:     100 * 1024 * 1024,
 			SecondsSinceDownload: 20 * 24 * 60 * 60,
 		},
@@ -214,13 +253,12 @@ func TestRemoveExpiredTorrents_RemovalError(t *testing.T) {
 		Retention:              "P14D",
 		DelugeUrl:              "http://test",
 		DelugePassword:         "test",
-		DelugeClientTimeout:    "2m",
+		TorrentClientTimeout:   "2m",
 		DryRun:                 false,
 		DiscordWebhookUrl:      "",
 		DiskFreeSpaceThreshold: nil,
 	}
 
-	var client TorrentClient = mockClient
 	discordClient := NewDiscordClient(config)
 	scheduler := NewScheduler(config)
 	shutdownChan := make(chan bool)
@@ -228,28 +266,29 @@ func TestRemoveExpiredTorrents_RemovalError(t *testing.T) {
 	ctx := &AppContext{
 		Scheduler:     &scheduler,
 		DiscordClient: discordClient,
-		TorrentClient: &client,
 		AppConfig:     &config,
 		ShutdownChan:  &shutdownChan,
 	}
 
 	// Should not panic, just log error
-	RemoveExpiredTorrents(ctx)
+	RemoveExpiredTorrents(ctx, mockClient)
 
 	if !mockClient.RemoveTorrentsWithDataCalled {
 		t.Error("RemoveTorrentsWithData should have been called")
 	}
+
+	scheduler.Shutdown()
 }
 
 func TestNewAppContext(t *testing.T) {
 	config := AppConfig{
-		Cron:                "0 0 * * *",
-		DelugeUrl:           "http://test",
-		DelugePassword:      "test",
-		DelugeClientTimeout: "2m",
-		Preview:             true,
-		DiscordWebhookUrl:   "",
-		TimeZone:            "UTC",
+		Cron:                 "0 0 * * *",
+		DelugeUrl:            "http://test",
+		DelugePassword:       "test",
+		TorrentClientTimeout: "2m",
+		Preview:              true,
+		DiscordWebhookUrl:    "",
+		TimeZone:             "UTC",
 	}
 
 	ctx := NewAppContext(config)
@@ -266,8 +305,8 @@ func TestNewAppContext(t *testing.T) {
 		t.Error("DiscordClient should not be nil")
 	}
 
-	if ctx.TorrentClient == nil {
-		t.Error("TorrentClient should not be nil")
+	if ctx.Jobs == nil {
+		t.Error("Jobs should not be nil")
 	}
 
 	if ctx.AppConfig == nil {
@@ -284,44 +323,55 @@ func TestNewAppContext(t *testing.T) {
 
 func TestNewAppContext_PreviewMode(t *testing.T) {
 	config := AppConfig{
-		Cron:                "0 0 * * *",
-		DelugeUrl:           "http://test",
-		DelugePassword:      "test",
-		DelugeClientTimeout: "2m",
-		Preview:             true,
-		DiscordWebhookUrl:   "",
-		TimeZone:            "UTC",
+		Cron:                 "0 0 * * *",
+		DelugeUrl:            "http://test",
+		DelugePassword:       "test",
+		TorrentClientTimeout: "2m",
+		Preview:              true,
+		DiscordWebhookUrl:    "",
+		TimeZone:             "UTC",
 	}
 
 	ctx := NewAppContext(config)
 
-	// Verify preview client is used
-	_, isPreview := (*ctx.TorrentClient).(*PreviewTorrentClient)
-	if !isPreview {
-		t.Error("Expected PreviewTorrentClient when Preview mode is enabled")
+	if len(*ctx.Jobs) != 1 {
+		t.Fatalf("Expected 1 job in preview mode, got %d", len(*ctx.Jobs))
+	}
+
+	job := (*ctx.Jobs)[0]
+	if job.TorrentType != "preview" {
+		t.Errorf("Expected TorrentType 'preview', got '%s'", job.TorrentType)
 	}
 
 	// Clean up
 	(*ctx.Scheduler).Shutdown()
 }
 
-func TestNewAppContext_RealClient(t *testing.T) {
+func TestNewAppContext_DelugeClient(t *testing.T) {
 	config := AppConfig{
-		Cron:                "0 0 * * *",
-		DelugeUrl:           "http://test",
-		DelugePassword:      "test",
-		DelugeClientTimeout: "2m",
-		Preview:             false,
-		DiscordWebhookUrl:   "",
-		TimeZone:            "UTC",
+		Cron:                 "0 0 * * *",
+		DelugeUrl:            "http://test",
+		DelugePassword:       "test",
+		TorrentClientTimeout: "2m",
+		Preview:              false,
+		DiscordWebhookUrl:    "",
+		TimeZone:             "UTC",
 	}
 
 	ctx := NewAppContext(config)
 
-	// Verify deluge client is used
-	_, isDeluge := (*ctx.TorrentClient).(*DelugeClient)
+	if len(*ctx.Jobs) != 1 {
+		t.Fatalf("Expected 1 job, got %d", len(*ctx.Jobs))
+	}
+
+	job := (*ctx.Jobs)[0]
+	if job.TorrentType != "deluge" {
+		t.Errorf("Expected TorrentType 'deluge', got '%s'", job.TorrentType)
+	}
+
+	_, isDeluge := job.TorrentClient.(*DelugeClient)
 	if !isDeluge {
-		t.Error("Expected DelugeClient when Preview mode is disabled")
+		t.Error("Expected DelugeClient when DelugeUrl is set")
 	}
 
 	// Clean up

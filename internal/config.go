@@ -11,9 +11,12 @@ import (
 
 type AppConfig struct {
 	Cron                   string  `envconfig:"PUFF_CRON_SCHEDULE"`
-	DelugeUrl              string  `envconfig:"PUFF_DELUGE_URL" required:"true"`
-	DelugePassword         string  `envconfig:"PUFF_DELUGE_PASSWORD" required:"true"`
-	DelugeClientTimeout    string  `envconfig:"PUFF_DELUGE_CLIENT_TIMEOUT" default:"2m0s"`
+	QbitTorrentUrl         string  `envconfig:"PUFF_QBITTORRENT_URL" required:"false"`
+	QbitTorrentPassword    string  `envconfig:"PUFF_QBITTORRENT_PASSWORD" required:"false"`
+	QbitTorrentUsername    string  `envconfig:"PUFF_QBITTORRENT_USERNAME" required:"false"`
+	DelugeUrl              string  `envconfig:"PUFF_DELUGE_URL" required:"false"`
+	DelugePassword         string  `envconfig:"PUFF_DELUGE_PASSWORD" required:"false"`
+	TorrentClientTimeout   string  `envconfig:"PUFF_TORRENT_CLIENT_TIMEOUT" default:"2m0s"`
 	Retention              string  `envconfig:"PUFF_RETENTION" default:"P14D"`
 	StartDelay             string  `envconfig:"PUFF_START_DELAY" default:"0s"`
 	DiskFreeSpaceThreshold *string `envconfig:"PUFF_DISK_FREE_SPACE_THRESHOLD"`
@@ -40,7 +43,7 @@ func (config AppConfig) ParseValidation() {
 	config.Location()
 	config.RetentionInSeconds()
 	config.StartDelayDuration()
-	config.DelugeClientTimeoutDuration()
+	config.TorrentClientTimeoutDuration()
 	config.DiskFreeSpaceThresholdInBytes()
 	if config.DiskFreeSpaceThreshold != nil {
 		_, err := config.FreeSpaceOfDiskPathInBytes()
@@ -75,8 +78,8 @@ func (config AppConfig) StartDelayDuration() time.Duration {
 	return duration
 }
 
-func (config AppConfig) DelugeClientTimeoutDuration() time.Duration {
-	duration, err := time.ParseDuration(config.DelugeClientTimeout)
+func (config AppConfig) TorrentClientTimeoutDuration() time.Duration {
+	duration, err := time.ParseDuration(config.TorrentClientTimeout)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

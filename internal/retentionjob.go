@@ -8,7 +8,7 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-func RemoveExpiredTorrents(ctx *AppContext) {
+func RemoveExpiredTorrents(ctx *AppContext, torrentClient TorrentClient) {
 	if ctx.AppConfig.DiskFreeSpaceThreshold != nil {
 		usageThreshold := ctx.AppConfig.DiskFreeSpaceThresholdInBytes()
 		freeSpaceOfDisk, err := ctx.AppConfig.FreeSpaceOfDiskPathInBytes()
@@ -25,14 +25,14 @@ func RemoveExpiredTorrents(ctx *AppContext) {
 		exceededByHumanFormat := humanize.Bytes(*usageThreshold - *freeSpaceOfDisk)
 		log.Info("threshold excedded", "threshold", thresholdHumanFormat, "free space", diskFreeSpaceHumanFormat, "exceeded by", exceededByHumanFormat)
 	}
-	finishedTorrents, err := (*ctx.TorrentClient).GetFinishedTorrents()
+	finishedTorrents, err := torrentClient.GetFinishedTorrents()
 	if err != nil {
 		log.Error("cannot get list of finished torrents", "err", err)
 		return
 	}
 	torrentsToRemove := make([]Torrent, 0)
 	for _, torrent := range finishedTorrents {
-		if torrent.SecondsSinceDownload > ctx.AppConfig.RetentionInSeconds() {
+		if torrent.Expired(ctx.AppConfig.RetentionInSeconds()) {
 			torrentsToRemove = append(torrentsToRemove, torrent)
 		}
 	}
@@ -40,7 +40,7 @@ func RemoveExpiredTorrents(ctx *AppContext) {
 		log.Info("no expired torrents to remove")
 		return
 	}
-	err = (*ctx.TorrentClient).RemoveTorrentsWithData(torrentsToRemove, ctx.AppConfig.DryRun)
+	err = torrentClient.RemoveTorrentsWithData(torrentsToRemove, ctx.AppConfig.DryRun)
 	if err != nil {
 		log.Error("remove torrents failed", "err", err)
 		return
@@ -48,7 +48,7 @@ func RemoveExpiredTorrents(ctx *AppContext) {
 
 	var totalBytes int64 = 0
 	for _, torrent := range torrentsToRemove {
-		totalBytes += torrent.TotalSizeInBytes
+		totalBytes += torrent.SizeInBytes()
 	}
 
 	formattedTorrents := formatTorrentsToPrint(torrentsToRemove)
@@ -63,7 +63,7 @@ func RemoveExpiredTorrents(ctx *AppContext) {
 func formatTorrentsToPrint(torrents []Torrent) string {
 	formated := make([]string, 0)
 	for i, torrent := range torrents {
-		formated = append(formated, fmt.Sprintf("%d. %s (%s)", i+1, torrent.Name, FormattedBytes(torrent.TotalSizeInBytes)))
+		formated = append(formated, fmt.Sprintf("%d. %s (%s)", i+1, torrent.Name(), FormattedBytes(torrent.SizeInBytes())))
 	}
 	return strings.Join(formated, "\n")
 }

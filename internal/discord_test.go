@@ -125,9 +125,9 @@ func TestFormatTorrentsToPrint(t *testing.T) {
 		{
 			name: "single torrent",
 			torrents: []Torrent{
-				{
+				TorrentDeluge{
 					Hash:                 "abc123",
-					Name:                 "Test.Torrent",
+					TorrentName:          "Test.Torrent",
 					TotalSizeInBytes:     100 * 1024 * 1024,
 					SecondsSinceDownload: 3600,
 				},
@@ -137,15 +137,15 @@ func TestFormatTorrentsToPrint(t *testing.T) {
 		{
 			name: "multiple torrents",
 			torrents: []Torrent{
-				{
+				TorrentDeluge{
 					Hash:                 "abc123",
-					Name:                 "First.Torrent",
+					TorrentName:          "First.Torrent",
 					TotalSizeInBytes:     100 * 1024 * 1024,
 					SecondsSinceDownload: 3600,
 				},
-				{
+				TorrentDeluge{
 					Hash:                 "def456",
-					Name:                 "Second.Torrent",
+					TorrentName:          "Second.Torrent",
 					TotalSizeInBytes:     500 * 1024 * 1024,
 					SecondsSinceDownload: 7200,
 				},
@@ -170,9 +170,9 @@ func TestSendInfoAboutTorrentsToDiscord(t *testing.T) {
 	client := NewDiscordClient(AppConfig{DiscordWebhookUrl: ""})
 
 	torrents := []Torrent{
-		{
+		TorrentDeluge{
 			Hash:                 "abc123",
-			Name:                 "Test.Torrent",
+			TorrentName:          "Test.Torrent",
 			TotalSizeInBytes:     100 * 1024 * 1024,
 			SecondsSinceDownload: 3600,
 		},
@@ -212,9 +212,9 @@ func BenchmarkDiscordClient_Write(b *testing.B) {
 func BenchmarkFormatTorrentsToPrint(b *testing.B) {
 	torrents := make([]Torrent, 100)
 	for i := 0; i < 100; i++ {
-		torrents[i] = Torrent{
+		torrents[i] = TorrentDeluge{
 			Hash:                 "hash" + string(rune(i)),
-			Name:                 "Torrent.Name." + string(rune(i)),
+			TorrentName:          "Torrent.Name." + string(rune(i)),
 			TotalSizeInBytes:     int64(i) * 1024 * 1024,
 			SecondsSinceDownload: i * 3600,
 		}

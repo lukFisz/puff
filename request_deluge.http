@@ -8,6 +8,16 @@ Content-Type: application/json
   "id": 0
 }
 
+### Check session
+POST http://deluge.lan/json
+Content-Type: application/json
+
+{
+  "id": 1,
+  "method": "auth.check_session",
+  "params": []
+}
+
 ### Get list of expired torrents
 POST http://deluge.lan/json
 Content-Type: application/json

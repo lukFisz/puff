@@ -32,8 +32,6 @@ func main() {
 
 	delayAppStart(config)
 
-	(*ctx.TorrentClient).CheckConnection()
-
 	orchestrateExecution(
 		func() *puff.AppContext { return runApp(ctx) },
 		gracefulShutdown,
@@ -76,7 +74,8 @@ func logConfig(config puff.AppConfig) {
 	}
 	strConfig := fmt.Sprintf(`  CRON_SCHEDULE: %s
   DELUGE_URL: %s
-  DELUGE_PASSWORD: ****
+  QBITTORRENT_URL: %s
+  QBITTORRENT_USERNAME: %s
   DELUGE_CLIENT_TIMEOUT: %s
   RETENTION: %s
   START_DELAY: %s
@@ -88,7 +87,9 @@ func logConfig(config puff.AppConfig) {
   TZ: %s`,
 		config.Cron,
 		config.DelugeUrl,
-		config.DelugeClientTimeout,
+		config.QbitTorrentUrl,
+		config.QbitTorrentUsername,
+		config.TorrentClientTimeout,
 		config.Retention,
 		config.StartDelay,
 		config.DryRun,
@@ -112,14 +113,16 @@ func orchestrateExecution(executeLogic func() *puff.AppContext, cleanUp func(*pu
 }
 
 func runApp(ctx *puff.AppContext) *puff.AppContext {
-	jobName := "Deluge torrent retention"
-	delTorrentsJob := func() { puff.RemoveExpiredTorrents(ctx) }
-	if ctx.AppConfig.RunOnce {
-		puff.NewOneTimeJob(jobName, delTorrentsJob, ctx)
-	} else {
-		puff.ScheduleCronjob(jobName, delTorrentsJob, ctx)
+	for _, j := range *ctx.Jobs {
+		j.TorrentClient.CheckConnection()
+		jobName := j.TorrentType + " retention"
+		delTorrentsJob := func() { puff.RemoveExpiredTorrents(ctx, j.TorrentClient) }
+		if ctx.AppConfig.RunOnce {
+			puff.NewOneTimeJob(jobName, delTorrentsJob, ctx)
+		} else {
+			puff.ScheduleCronjob(jobName, delTorrentsJob, ctx)
+		}
 	}
-
 	return ctx
 }
 

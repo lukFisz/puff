@@ -5,10 +5,15 @@ import (
 	"github.com/go-co-op/gocron/v2"
 )
 
+type TorrentClientJob struct {
+	TorrentType   string
+	TorrentClient TorrentClient
+}
+
 type AppContext struct {
 	Scheduler     *gocron.Scheduler
 	DiscordClient *DiscordClient
-	TorrentClient *TorrentClient
+	Jobs          *[]TorrentClientJob
 	AppConfig     *AppConfig
 	ShutdownChan  *chan bool
 }
@@ -18,20 +23,29 @@ func NewAppContext(cfg AppConfig) *AppContext {
 		log.Fatal("CRON SCHEDULE cannot be empty")
 	}
 
-	var torrentClient TorrentClient
+	job := make([]TorrentClientJob, 0)
 	if cfg.Preview {
-		torrentClient = NewPreviewTorrentClient()
+		job = append(job, TorrentClientJob{TorrentType: "preview", TorrentClient: NewDelugeClient(cfg)})
 	} else {
-		torrentClient = NewDelugeClient(cfg)
+		if cfg.DelugeUrl != "" {
+			job = append(job, TorrentClientJob{TorrentType: "deluge", TorrentClient: NewDelugeClient(cfg)})
+			log.Info("Deluge client enabled")
+		}
+		if cfg.QbitTorrentUrl != "" {
+			job = append(job, TorrentClientJob{TorrentType: "qbittorrent", TorrentClient: NewQbitTorrentClient(cfg)})
+			log.Info("Qbittorrent client enabled")
+		}
 	}
+
 	discordClient := NewDiscordClient(cfg)
+
 	scheduler := NewScheduler(cfg)
 
 	shutdowns := make(chan bool)
 	return &AppContext{
 		Scheduler:     &scheduler,
 		DiscordClient: discordClient,
-		TorrentClient: &torrentClient,
+		Jobs:          &job,
 		AppConfig:     &cfg,
 		ShutdownChan:  &shutdowns,
 	}

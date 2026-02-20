@@ -84,7 +84,7 @@ func TestAppConfig_StartDelayDuration(t *testing.T) {
 	}
 }
 
-func TestAppConfig_DelugeClientTimeoutDuration(t *testing.T) {
+func TestAppConfig_TorrentClientTimeoutDuration(t *testing.T) {
 	tests := []struct {
 		name    string
 		timeout string
@@ -109,10 +109,10 @@ func TestAppConfig_DelugeClientTimeoutDuration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := AppConfig{DelugeClientTimeout: tt.timeout}
-			got := config.DelugeClientTimeoutDuration()
+			config := AppConfig{TorrentClientTimeout: tt.timeout}
+			got := config.TorrentClientTimeoutDuration()
 			if got != tt.want {
-				t.Errorf("DelugeClientTimeoutDuration() = %v, want %v", got, tt.want)
+				t.Errorf("TorrentClientTimeoutDuration() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -252,8 +252,8 @@ func TestGetConfig(t *testing.T) {
 		t.Errorf("Retention = %v, want %v (default)", config.Retention, "P14D")
 	}
 
-	if config.DelugeClientTimeout != "2m0s" {
-		t.Errorf("DelugeClientTimeout = %v, want %v (default)", config.DelugeClientTimeout, "2m0s")
+	if config.TorrentClientTimeout != "2m0s" {
+		t.Errorf("TorrentClientTimeout = %v, want %v (default)", config.TorrentClientTimeout, "2m0s")
 	}
 }
 
