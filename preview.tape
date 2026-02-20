@@ -59,8 +59,9 @@ Output img/preview.gif
 
 Set Shell "bash"
 Set FontSize 17
-Set Width 1350
-Set Height 800
+Set Width 1300
+Set Height 500
+Set Padding 30
 
 Type@100ms `puff`
 Sleep 1500ms
