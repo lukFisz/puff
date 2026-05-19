@@ -66,7 +66,7 @@ func (q *QbitTorrentClient) CheckConnection() {
 	if err != nil {
 		log.Error().Err(err).Str("url", q.BaseURL).Msg("failed to connect to qbittorrent")
 	}
-	if resp.StatusCode() == 200 || resp.String() == "Fails." {
+	if resp.StatusCode() < 300 || resp.String() == "Fails." {
 		log.Info().
 			Str("url", q.BaseURL).
 			Msg("successfully connected to qbittorrent")
